@@ -1,0 +1,5 @@
+{"name":"printforge-client","private":true,"version":"2.0.0","type":"module",
+"scripts":{"copy":"mkdir -p public && cp node_modules/occt-import-js/dist/occt-import-js.js node_modules/occt-import-js/dist/occt-import-js.wasm public/",
+"predev":"npm run copy","prebuild":"npm run copy","dev":"vite","build":"vite build"},
+"dependencies":{"occt-import-js":"^0.0.23","react":"^18.3.1","react-dom":"^18.3.1","three":"^0.160.0"},
+"devDependencies":{"@vitejs/plugin-react":"^4.3.1","vite":"^5.4.0"}}

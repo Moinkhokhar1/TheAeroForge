@@ -1,0 +1,318 @@
+{
+  "content": {
+    "name": "Layerforge 3D",
+    "badge": "Now taking orders in Vadodara, Gujarat",
+    "heroTitle": "From STEP file to printed part.",
+    "heroText": "Drop in your CAD file and see a price in seconds, right in your browser. Then send it to us and we will print it. Precision 3D printing for engineers, founders and makers.",
+    "stats": [
+      {
+        "value": "24h",
+        "label": "fastest turnaround"
+      },
+      {
+        "value": "6",
+        "label": "engineering materials"
+      },
+      {
+        "value": "0.1 mm",
+        "label": "finest layer height"
+      }
+    ],
+    "quoteTitle": "Get an instant price for your part",
+    "quoteText": "Upload a STEP file. We measure the model in your browser and price it using your material, quality and quantity. The file stays on your device until you choose to send it.",
+    "servicesTitle": "What we print, and how we help",
+    "servicesText": "From a single bracket to a batch of 500, printed on calibrated machines and checked before it leaves.",
+    "services": [
+      {
+        "title": "Rapid prototyping",
+        "desc": "Functional prototypes in 24–72 hours so you can test fit and form before you commit to tooling."
+      },
+      {
+        "title": "Custom parts & spares",
+        "desc": "Brackets, enclosures, jigs, replacement parts. Send a STEP file or a sketch and we will help."
+      },
+      {
+        "title": "Small-batch production",
+        "desc": "Repeat runs of 5 to 500 parts with consistent quality and quantity pricing."
+      },
+      {
+        "title": "Student & project support",
+        "desc": "Final-year projects, IoT enclosures, robotics parts. Fair pricing and design feedback."
+      },
+      {
+        "title": "CAD & design help",
+        "desc": "No model yet? We can turn your measurements or idea into a printable CAD file."
+      },
+      {
+        "title": "Finishing",
+        "desc": "Sanding, priming, painting and assembly for parts that need to look as good as they work."
+      }
+    ],
+    "materialsTitle": "Materials",
+    "materialsText": "Pick the plastic that fits the job. Prices in the instant quote update as you switch.",
+    "stepsTitle": "How it works",
+    "steps": [
+      {
+        "title": "Upload your STEP file",
+        "desc": "Get an instant estimate in your browser. Your file is not uploaded anywhere until you send an inquiry."
+      },
+      {
+        "title": "Send an inquiry",
+        "desc": "Confirm material, quantity and deadline. We review the model and reply within a few hours."
+      },
+      {
+        "title": "We print",
+        "desc": "Your parts are sliced, printed and quality-checked on calibrated machines."
+      },
+      {
+        "title": "Delivery or pickup",
+        "desc": "Pick up in Vadodara or get it shipped across India."
+      }
+    ],
+    "aboutTitle": "A small workshop that answers its phone",
+    "aboutText": "Layerforge 3D started in Vadodara, Gujarat in 2026. We are engineers, so we look at your design before we print it and tell you honestly if a small change will make it stronger, faster or cheaper to make.\n\nFounders, students, workshops and factories send us their parts. You deal directly with the person running the printers, not a ticket queue.",
+    "location": "Vadodara, Gujarat 390001",
+    "hours": "Mon – Sat, 10:00 – 19:00",
+    "phone": "+91 7229064808",
+    "email": "moinkhokhar2730vdr@gmail.com",
+    "faqTitle": "Questions people ask",
+    "faqs": [
+      {
+        "q": "Is the online price final?",
+        "a": "It is a close estimate based on your model’s volume, surface area and the options you pick. We confirm a final quote after reviewing the file, usually within a few hours."
+      },
+      {
+        "q": "Is my file uploaded when I get a quote?",
+        "a": "No. Measuring happens in your browser. The file is only sent if you submit an inquiry."
+      },
+      {
+        "q": "Which file formats can I send?",
+        "a": "STEP or STP for the instant quote. In an inquiry you can also attach STL, 3MF, OBJ, PDF or ZIP up to 15 MB."
+      }
+    ],
+    "contactTitle": "Tell us what you need printed",
+    "contactText": "Send a message with your file or idea. We reply within a few hours during working hours.",
+    "leadTitle": "Almost there",
+    "leadText": "Choose your country and currency, then enter your details to see your instant estimate. We only use them to follow up on your quote.",
+    "leadButton": "Show my estimate",
+    "technologyLabel": "Technology",
+    "unitLabel": "What unit is your model in?",
+    "drawEnabled": "yes",
+    "drawTitle": "Technical Drawings and Notes",
+    "drawHint": "Add drawings or reference files (max 5 MB each, up to 5 files) and any notes.",
+    "drawMaxMb": 5,
+    "holesTitle": "Detected",
+    "showHoles": "yes",
+    "showChecks": "yes",
+    "checks": [
+      {
+        "key": "watertight",
+        "label": "Closed Geometry (Watertight)",
+        "on": "yes"
+      },
+      {
+        "key": "thin",
+        "label": "Thin walls",
+        "on": "yes"
+      },
+      {
+        "key": "overhang",
+        "label": "Overhangs and Supports",
+        "on": "yes"
+      },
+      {
+        "key": "integrity",
+        "label": "Part Integrity",
+        "on": "yes"
+      }
+    ]
+  },
+  "pricing": {
+    "currency": "₹",
+    "setupFee": 100,
+    "hourlyRate": 100,
+    "speedCm3PerHour": 12,
+    "markupPct": 20,
+    "minPrice": 200,
+    "supportsPct": 25,
+    "wallMm": 1.2,
+    "rangePct": 15,
+    "buildVolume": [
+      256,
+      256,
+      256
+    ],
+    "qualities": [
+      {
+        "tech": "FDM",
+        "name": "Draft",
+        "layer": 0.5
+      },
+      {
+        "tech": "FDM",
+        "name": "Standard",
+        "layer": 0.3
+      },
+      {
+        "tech": "FDM",
+        "name": "Fine",
+        "layer": 0.2
+      }
+    ],
+    "materials": [
+      {
+        "tech": "FDM",
+        "name": "PET-G",
+        "desc": "PETG (Polyethylene Terephthalate Glycol) is a clear, durable, and chemical-resistant thermoplastic polyester widely used in manufacturing and 3D printing. ",
+        "density": 1,
+        "pricePerGram": 1
+      },
+      {
+        "name": "mmmm",
+        "tech": "SLA",
+        "desc": "",
+        "density": 1,
+        "pricePerGram": 1
+      }
+    ],
+    "technologies": [
+      {
+        "name": "FDM",
+        "desc": "Strong, affordable parts for prototypes and functional use.",
+        "rateMul": 1,
+        "speedMul": 1,
+        "refLayer": 0.2
+      },
+      {
+        "name": "SLA",
+        "desc": "Resin printing for fine detail and smooth surfaces.",
+        "rateMul": 1.5,
+        "speedMul": 0.6,
+        "refLayer": 0.05
+      },
+      {
+        "name": "MJF",
+        "desc": "MJF",
+        "rateMul": 1,
+        "speedMul": 1,
+        "refLayer": 1
+      }
+    ],
+    "currencies": [
+      {
+        "code": "INR",
+        "symbol": "₹",
+        "rate": 1
+      },
+      {
+        "code": "USD",
+        "symbol": "$",
+        "rate": 0.01
+      },
+      {
+        "code": "EUR",
+        "symbol": "€",
+        "rate": 0.092
+      },
+      {
+        "code": "GBP",
+        "symbol": "£",
+        "rate": 0.0095
+      },
+      {
+        "code": "AED",
+        "symbol": "AED ",
+        "rate": 0.044
+      }
+    ],
+    "countries": [
+      {
+        "name": "India",
+        "currency": "INR"
+      },
+      {
+        "name": "United States",
+        "currency": "USD"
+      },
+      {
+        "name": "United Kingdom",
+        "currency": "GBP"
+      },
+      {
+        "name": "Germany",
+        "currency": "EUR"
+      },
+      {
+        "name": "United Arab Emirates",
+        "currency": "AED"
+      }
+    ],
+    "units": [
+      {
+        "name": "Millimeters (mm)",
+        "factor": 1
+      },
+      {
+        "name": "Centimeters (cm)",
+        "factor": 10
+      },
+      {
+        "name": "Inches (in)",
+        "factor": 25.4
+      }
+    ],
+    "infills": [
+      {
+        "value": 10
+      },
+      {
+        "value": 20
+      },
+      {
+        "value": 30
+      },
+      {
+        "value": 40
+      },
+      {
+        "value": 50
+      },
+      {
+        "value": 60
+      },
+      {
+        "value": 70
+      },
+      {
+        "value": 80
+      },
+      {
+        "value": 90
+      },
+      {
+        "value": 100
+      }
+    ]
+  },
+  "inquiries": [
+    {
+      "id": "mvdid68a",
+      "name": "Moin",
+      "email": "naprooms.cctv@gmail.com",
+      "phone": "7201074880",
+      "topic": "Instant quote",
+      "message": "Instant quote request for perfume_organizer.step (model unit: Millimeters (mm)): FDM, SLA, Fine, 90% infill, qty 1. Size 234 × 128 × 58 mm, volume 894.9 cm³, 8 holes detected. Internal estimate: ₹9,293.",
+      "notes": "khokhar moin",
+      "file": "1adf8dd6024827b3.step",
+      "fileName": "perfume_organizer.step",
+      "drawings": [
+        {
+          "file": "75a5f1e116a1bc0c.jpeg",
+          "fileName": "images (1).jpeg"
+        }
+      ],
+      "status": "done",
+      "createdAt": "2026-10-18T07:32:50.506Z"
+    }
+  ]
+}
