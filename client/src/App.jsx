@@ -8,6 +8,7 @@ import Nav from './Nav.jsx';
 import SubPage, { Showcase } from './Pages.jsx';
 import { normPricing, normContent } from './defaults.js';
 import { detectHoles, geometryChecks, fitLabel } from './analyze.js';
+import NotFound from './NotFound.jsx';
 
 /* ---- STEP measuring (runs fully in the browser via OpenCascade WASM) ---- */
 
@@ -735,7 +736,72 @@ function Contact({ c }) {
     </section>
   );
 }
+/* ---- How it works timeline ---- */
 
+function Steps({ steps }) {
+  const ref = useRef(null);
+  const fill = useRef(null);
+
+  useEffect(() => {
+    const root = ref.current;
+    const items = [...root.querySelectorAll('.tl-step')];
+    const wide = window.matchMedia('(min-width: 900px)');
+    let furthest = -1;
+
+    const grow = () => {
+      if (furthest < 0) return;
+      const el = items[furthest];
+      const f = fill.current;
+      if (wide.matches) {
+        f.style.width = el.offsetLeft + 20 + 'px';
+        f.style.height = '';
+      } else {
+        f.style.height = el.offsetTop + 20 + 'px';
+        f.style.width = '';
+      }
+    };
+
+    // Hide steps only after JS is running, so content never stays invisible
+    root.classList.add('on');
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => {
+          if (!en.isIntersecting) return;
+          en.target.classList.add('in');
+          furthest = Math.max(furthest, items.indexOf(en.target));
+          io.unobserve(en.target);
+        });
+        grow();
+      },
+      { threshold: 0.3 }
+    );
+
+    items.forEach((el) => io.observe(el));
+    window.addEventListener('resize', grow);
+
+    return () => {
+      io.disconnect();
+      window.removeEventListener('resize', grow);
+    };
+  }, [steps.length]);
+
+  return (
+    <div className="tl" ref={ref}>
+      <span className="tl-track" aria-hidden="true">
+        <span className="tl-fill" ref={fill} />
+      </span>
+
+      {steps.map((s, i) => (
+        <div className="tl-step" key={i} style={{ '--i': i }}>
+          <span className="tl-num">{i + 1}</span>
+          <h3>{s.title}</h3>
+          <p>{s.desc}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 /* ---- Main website ---- */
 
 function Site() {
@@ -761,7 +827,7 @@ function Site() {
   const P = normPricing(d.pricing);
   const pg = d.pages || {};
 
-  document.title = c.name + ' | 3D printing';
+  document.title = c.name + ' | The AeroForge';
 
   return (
     <>
@@ -913,7 +979,16 @@ export default function App() {
     return () => removeEventListener('hashchange', f);
   }, []);
 
-  const sub = h.match(/^#\/(industries|services|materials)/);
+   const sub = h.match(/^#\/(industries|services|materials)/);
+
+  // Real path that isn't the homepage (the server sends these here with a 404 status)
+  const p = location.pathname.replace(/\/+$/, '');
+  const badPath = p !== '' && p !== '/index.html';
+
+  // "#/something" that isn't a known route. Plain anchors like #quote are fine.
+  const badHash = /^#\/./.test(h) && h !== '#/admin' && !sub;
+
+  if (badPath || badHash) return <NotFound />;
   if (h === '#/admin') return <Admin />;
   if (sub) return <SubPage key={sub[1]} route={sub[1]} />;
   return <Site />;

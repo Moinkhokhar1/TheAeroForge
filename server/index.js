@@ -296,6 +296,14 @@ app.delete('/api/admin/inquiries/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// Unknown API routes get JSON, everything else gets the SPA with a 404 status
+app.use((req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404).sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
 const dist = path.join(__dirname, '../client/dist');
 if (fs.existsSync(dist)) { app.use(express.static(dist)); app.get('*', (_, res) => res.sendFile(path.join(dist, 'index.html'))); }
 app.listen(PORT, () => console.log('Server on :' + PORT));

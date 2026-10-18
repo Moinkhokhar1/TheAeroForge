@@ -87,7 +87,7 @@ export default function Nav({ c }) {
           <aside className={'nv-drawer' + (open ? ' open' : '')} aria-hidden={!open}>
             <div className="nv-top">
               <b style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <img src="/logo.png" alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                <img src="/assets/icon-512.png" alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />
                 {c.name}
               </b>
               <button className="nv-burger open" aria-label="Close menu" onClick={close}>
