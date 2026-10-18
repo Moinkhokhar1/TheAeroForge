@@ -3,6 +3,9 @@ import { api, Inp } from './lib.jsx';
 import Viewer, { HOLE_COL } from './Viewer.jsx';
 import Admin from './Admin.jsx';
 import Footer from './Footer.jsx';
+import './pages.css';
+import Nav from './Nav.jsx';
+import SubPage, { Showcase } from './Pages.jsx';
 import { normPricing, normContent } from './defaults.js';
 import { detectHoles, geometryChecks, fitLabel } from './analyze.js';
 
@@ -14,29 +17,17 @@ const loadOcct = () =>
   occtP ||
   (occtP = new Promise((ok, no) => {
     const s = document.createElement('script');
-
     s.src = '/occt-import-js.js';
-
     s.onload = () =>
-      window
-        .occtimportjs({
-          locateFile: (n) => '/' + n,
-        })
-        .then(ok, no);
-
-    s.onerror = () =>
-      no(new Error('Could not load the CAD engine'));
-
+      window.occtimportjs({ locateFile: (n) => '/' + n }).then(ok, no);
+    s.onerror = () => no(new Error('Could not load the CAD engine'));
     document.head.appendChild(s);
   }));
 
 async function measure(file) {
   const occt = await loadOcct();
 
-  const r = occt.ReadStepFile(
-    new Uint8Array(await file.arrayBuffer()),
-    null
-  );
+  const r = occt.ReadStepFile(new Uint8Array(await file.arrayBuffer()), null);
 
   if (!r.success || !r.meshes.length) {
     throw new Error('Could not read this STEP file');
@@ -44,7 +35,6 @@ async function measure(file) {
 
   let vol = 0;
   let area = 0;
-
   const mn = [1e9, 1e9, 1e9];
   const mx = [-1e9, -1e9, -1e9];
 
@@ -60,36 +50,16 @@ async function measure(file) {
       const ux = p[b] - p[a];
       const uy = p[b + 1] - p[a + 1];
       const uz = p[b + 2] - p[a + 2];
-
       const vx = p[c] - p[a];
       const vy = p[c + 1] - p[a + 1];
       const vz = p[c + 2] - p[a + 2];
 
-      area +=
-        Math.hypot(
-          uy * vz - uz * vy,
-          uz * vx - ux * vz,
-          ux * vy - uy * vx
-        ) / 2;
+      area += Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) / 2;
 
       vol +=
-        (
-          p[a] *
-          (
-            p[b + 1] * p[c + 2] -
-            p[b + 2] * p[c + 1]
-          ) -
-          p[a + 1] *
-          (
-            p[b] * p[c + 2] -
-            p[b + 2] * p[c]
-          ) +
-          p[a + 2] *
-          (
-            p[b] * p[c + 1] -
-            p[b + 1] * p[c]
-          )
-        ) / 6;
+        (p[a] * (p[b + 1] * p[c + 2] - p[b + 2] * p[c + 1]) -
+          p[a + 1] * (p[b] * p[c + 2] - p[b + 2] * p[c]) +
+          p[a + 2] * (p[b] * p[c + 1] - p[b + 1] * p[c])) / 6;
     }
 
     for (let i = 0; i < p.length; i += 3) {
@@ -112,13 +82,10 @@ async function measure(file) {
 const N = Number;
 
 const estimate = (m, o, P, mat, tech, q) => {
-  const shell = Math.min(
-    m.vol,
-    (m.area * N(P.wallMm)) / 10
-  );
+  const shell = Math.min(m.vol, (m.area * N(P.wallMm)) / 10);
 
   const printed =
-    (shell + (m.vol - shell) * o.infill / 100) *
+    (shell + ((m.vol - shell) * o.infill) / 100) *
     (o.supports ? 1 + N(P.supportsPct) / 100 : 1);
 
   const grams = printed * N(mat.density);
@@ -128,22 +95,13 @@ const estimate = (m, o, P, mat, tech, q) => {
     (N(tech.refLayer || 0.2) / N(q.layer));
 
   const unit =
-    (
-      grams * N(mat.pricePerGram) +
-      hours * N(P.hourlyRate) * N(tech.rateMul || 1)
-    ) *
+    (grams * N(mat.pricePerGram) + hours * N(P.hourlyRate) * N(tech.rateMul || 1)) *
     (1 + N(P.markupPct) / 100);
 
-  const total = Math.max(
-    N(P.minPrice),
-    unit * o.qty + N(P.setupFee)
-  );
+  const total = Math.max(N(P.minPrice), unit * o.qty + N(P.setupFee));
 
   const bv = [...P.buildVolume].sort((a, b) => b - a);
-
-  const fits = [...m.dims]
-    .sort((a, b) => b - a)
-    .every((d, i) => d <= bv[i]);
+  const fits = [...m.dims].sort((a, b) => b - a).every((d, i) => d <= bv[i]);
 
   return {
     total: Math.round(total),
@@ -157,27 +115,18 @@ const estimate = (m, o, P, mat, tech, q) => {
 };
 
 // Materials and qualities available for one technology.
-
 const forTech = (P, t) => {
   const f = (a) => {
     const r = a.filter((x) => !x.tech || x.tech === t);
     return r.length ? r : a;
   };
-
-  return {
-    mats: f(P.materials),
-    quals: f(P.qualities),
-  };
+  return { mats: f(P.materials), quals: f(P.qualities) };
 };
 
 const Sel = ({ label, value, onChange, opts }) => (
   <>
     <label>{label}</label>
-
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
+    <select value={value} onChange={(e) => onChange(e.target.value)}>
       {opts.map(([v, l]) => (
         <option key={v} value={v}>
           {l}
@@ -193,143 +142,75 @@ function HoleList({ title, holes, selected, onSelect }) {
   const [open, setOpen] = useState(true);
 
   const H = {
-    box: {
-      background: '#fff',
-      color: '#0f172a',
-      borderRadius: 14,
-      border: '1px solid #d6def5',
-      marginTop: 12,
-      overflow: 'hidden',
-    },
-    head: {
-      display: 'flex',
-      gap: 10,
-      alignItems: 'center',
-      width: '100%',
-      padding: '14px 16px',
-      border: 0,
-      background: '#fff',
-      cursor: 'pointer',
-      font: 'inherit',
-      color: 'inherit',
-    },
-    cat: {
-      padding: '14px 16px 6px',
-      fontSize: 12,
-      fontWeight: 700,
-      letterSpacing: '.06em',
-      color: '#64748b',
-      textTransform: 'uppercase',
-    },
+    box: { background: '#fff', color: '#0f172a', borderRadius: 14, border: '1px solid #d6def5', marginTop: 12, overflow: 'hidden' },
+    head: { display: 'flex', gap: 10, alignItems: 'center', width: '100%', padding: '14px 16px', border: 0, background: '#fff', cursor: 'pointer', font: 'inherit', color: 'inherit' },
+    cat: { padding: '14px 16px 6px', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', color: '#64748b', textTransform: 'uppercase' },
   };
 
   return (
     <div style={H.box}>
-      <button
-        style={H.head}
-        onClick={() => setOpen(!open)}
-      >
+      <button style={H.head} onClick={() => setOpen(!open)}>
         <b>{title}</b>
-
         <span style={{ color: '#64748b' }}>
           {holes.length} {holes.length === 1 ? 'hole' : 'holes'}
         </span>
-
         <span style={{ color: '#16a34a' }}>✔</span>
-
-        <span style={{ marginLeft: 'auto' }}>
-          {open ? '▴' : '▾'}
-        </span>
+        <span style={{ marginLeft: 'auto' }}>{open ? '▴' : '▾'}</span>
       </button>
 
       {open && (
-        <div
-          style={{
-            maxHeight: 300,
-            overflowY: 'auto',
-            borderTop: '1px solid #e2e8f0',
-            paddingBottom: 6,
-          }}
-        >
+        <div style={{ maxHeight: 300, overflowY: 'auto', borderTop: '1px solid #e2e8f0', paddingBottom: 6 }}>
           {!holes.length && (
-            <p
-              style={{
-                padding: '12px 16px',
-                margin: 0,
-                color: '#64748b',
-              }}
-            >
+            <p style={{ padding: '12px 16px', margin: 0, color: '#64748b' }}>
               No round holes found in this model.
             </p>
           )}
 
-          {[['hole', 'Holes'], ['cbore', 'Counterbored holes']].map(
-            ([k, l]) => {
-              const hs = holes.filter((h) => h.kind === k);
+          {[['hole', 'Holes'], ['cbore', 'Counterbored holes']].map(([k, l]) => {
+            const hs = holes.filter((h) => h.kind === k);
 
-              return hs.length ? (
-                <div key={k}>
-                  <div style={H.cat}>{l}</div>
+            return hs.length ? (
+              <div key={k}>
+                <div style={H.cat}>{l}</div>
 
-                  {hs.map((h) => (
-                    <div
-                      key={h.id}
-                      onClick={() =>
-                        onSelect(h.id === selected ? null : h.id)
-                      }
+                {hs.map((h) => (
+                  <div
+                    key={h.id}
+                    onClick={() => onSelect(h.id === selected ? null : h.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      background: h.id === selected ? '#f1f5f9' : 'transparent',
+                    }}
+                  >
+                    <span
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                        padding: '10px 16px',
-                        cursor: 'pointer',
-                        background:
-                          h.id === selected ? '#f1f5f9' : 'transparent',
+                        width: 16,
+                        height: 16,
+                        borderRadius: 4,
+                        flex: 'none',
+                        background: h.id === selected ? HOLE_COL.sel : HOLE_COL[h.kind],
                       }}
-                    >
-                      <span
-                        style={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: 4,
-                          flex: 'none',
-                          background:
-                            h.id === selected
-                              ? HOLE_COL.sel
-                              : HOLE_COL[h.kind],
-                        }}
-                      />
+                    />
 
-                      <span>
-                        Ø{h.dia} × {h.depth} mm
+                    <span>
+                      Ø{h.dia} × {h.depth} mm
+                      {h.sub && (
+                        <small style={{ display: 'block', color: '#64748b' }}>{h.sub}</small>
+                      )}
+                    </span>
 
-                        {h.sub && (
-                          <small
-                            style={{
-                              display: 'block',
-                              color: '#64748b',
-                            }}
-                          >
-                            {h.sub}
-                          </small>
-                        )}
-                      </span>
-
-                      <span
-                        style={{
-                          marginLeft: 'auto',
-                          color: '#64748b',
-                          fontSize: 14,
-                        }}
-                      >
-                        {h.fit}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : null;
-            }
-          )}
+                    <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: 14 }}>
+                      {h.fit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null;
+          })}
         </div>
       )}
     </div>
@@ -372,13 +253,7 @@ function Quote({ c, P }) {
   const [lb, setLb] = useState(false);
   const [lf, setLf] = useState(() => {
     try {
-      return (
-        JSON.parse(sessionStorage.getItem('lead')) || {
-          name: '',
-          email: '',
-          phone: '',
-        }
-      );
+      return JSON.parse(sessionStorage.getItem('lead')) || { name: '', email: '', phone: '' };
     } catch {
       return { name: '', email: '', phone: '' };
     }
@@ -515,10 +390,7 @@ function Quote({ c, P }) {
       fd.append('email', email.trim());
       fd.append('phone', phone.trim());
       fd.append('topic', 'Instant quote');
-      fd.append(
-        'message',
-        summary() + (big ? ' (File is over 15 MB, so it was not attached.)' : '')
-      );
+      fd.append('message', summary() + (big ? ' (File is over 15 MB, so it was not attached.)' : ''));
       if (notes.trim()) fd.append('notes', notes.trim());
       if (!big) fd.append('file', file);
       draws.forEach((f) => fd.append('drawings', f));
@@ -732,9 +604,7 @@ function Quote({ c, P }) {
             <div className="modal" role="dialog" aria-modal="true" style={{ textAlign: 'center' }} onClick={(ev) => ev.stopPropagation()}>
               <div style={{ fontSize: 48, color: '#16a34a' }}>✔</div>
               <h3>Inquiry received!</h3>
-              <p className="mut">
-                We have received your inquiry. We will get back to you shortly.
-              </p>
+              <p className="mut">We have received your inquiry. We will get back to you shortly.</p>
               <button
                 className="btn full"
                 onClick={() => {
@@ -754,68 +624,34 @@ function Quote({ c, P }) {
 
 /* ---- Contact section ---- */
 
-function Contact({ c, draft }) {
+function Contact({ c }) {
   const blank = {
     name: '',
     phone: '',
     email: '',
-    topic: 'Instant quote follow-up',
+    topic: 'Custom print job',
     message: '',
   };
 
   const [f, setF] = useState(blank);
   const [file, setFile] = useState(null);
-  const [draws, setDraws] = useState([]);
   const [s, setS] = useState({});
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!draft) return;
-
-    const big = draft.file.size > 15 * 1024 * 1024;
-
-    setFile(big ? null : draft.file);
-    setDraws(draft.draws || []);
-
-    setF((x) => ({
-      ...x,
-      ...(draft.lead || {}),
-      topic: 'Instant quote follow-up',
-      message:
-        draft.text +
-        (big
-          ? ` (The file is ${(draft.file.size / 1048576).toFixed(0)} MB, so please tell me how to share it.)`
-          : ''),
-    }));
-  }, [draft]);
 
   const submit = async () => {
     const fd = new FormData();
 
     Object.entries(f).forEach(([k, v]) => fd.append(k, v));
-
-    if (file) {
-      fd.append('file', file);
-    }
-
-    draws.forEach((d) => fd.append('drawings', d));
+    if (file) fd.append('file', file);
 
     setBusy(true);
     setS({});
 
     try {
-      await api('/inquiries', {
-        method: 'POST',
-        body: fd,
-      });
-
-      setS({
-        ok: 'Thanks! We will get back to you within a few hours.',
-      });
-
+      await api('/inquiries', { method: 'POST', body: fd });
+      setS({ ok: 'Thanks! We will get back to you within a few hours.' });
       setF(blank);
       setFile(null);
-      setDraws([]);
     } catch (x) {
       setS({ err: x.message });
     }
@@ -849,34 +685,16 @@ function Contact({ c, draft }) {
 
         <div className="qcardfooter form">
           <div className="row2">
-            <Inp
-              label="Your name"
-              value={f.name}
-              onChange={set('name')}
-            />
-
-            <Inp
-              label="Phone"
-              value={f.phone}
-              onChange={set('phone')}
-            />
+            <Inp label="Your name" value={f.name} onChange={set('name')} />
+            <Inp label="Phone" value={f.phone} onChange={set('phone')} />
           </div>
 
-          <Inp
-            label="Email"
-            type="email"
-            value={f.email}
-            onChange={set('email')}
-          />
+          <Inp label="Email" type="email" value={f.email} onChange={set('email')} />
 
           <label>What do you need?</label>
 
-          <select
-            value={f.topic}
-            onChange={(e) => set('topic')(e.target.value)}
-          >
+          <select value={f.topic} onChange={(e) => set('topic')(e.target.value)}>
             {[
-              'Instant quote follow-up',
               'Custom print job',
               'Small-batch production',
               'CAD / design help',
@@ -899,33 +717,14 @@ function Contact({ c, draft }) {
           <input
             type="file"
             accept=".step,.stp,.stl,.3mf,.obj,.pdf,.zip"
-            onChange={(e) =>
-              setFile(e.target.files[0] || null)
-            }
+            onChange={(e) => setFile(e.target.files[0] || null)}
           />
 
-          {file && (
-            <p className="mut sm">
-              📎 {file.name} will be sent with your inquiry.
-            </p>
-          )}
+          {file && <p className="mut sm">📎 {file.name} will be sent with your inquiry.</p>}
 
-          {draws.length > 0 && (
-            <p className="mut sm">
-              📎 {draws.length} drawing file
-              {draws.length > 1 ? 's' : ''} will be sent too.
-            </p>
-          )}
+          <p className="mut sm">STEP, STL, 3MF, OBJ, PDF or ZIP, up to 15 MB.</p>
 
-          <p className="mut sm">
-            STEP, STL, 3MF, OBJ, PDF or ZIP, up to 15 MB.
-          </p>
-
-          <button
-            className="btn full"
-            disabled={busy}
-            onClick={submit}
-          >
+          <button className="btn full" disabled={busy} onClick={submit}>
             {busy ? 'Sending…' : 'Send inquiry'}
           </button>
 
@@ -943,7 +742,6 @@ function Site() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState('');
   const [open, setOpen] = useState(0);
-  const [draft, setDraft] = useState(null);
 
   useEffect(() => {
     api('/content')
@@ -952,11 +750,7 @@ function Site() {
   }, []);
 
   if (err) {
-    return (
-      <p style={{ padding: 40 }}>
-        Can't reach the server: {err}
-      </p>
-    );
+    return <p style={{ padding: 40 }}>Can't reach the server: {err}</p>;
   }
 
   if (!d) {
@@ -965,45 +759,13 @@ function Site() {
 
   const c = normContent(d.content);
   const P = normPricing(d.pricing);
+  const pg = d.pages || {};
 
   document.title = c.name + ' | 3D printing';
 
-  const names = P.technologies
-    .map((x) => x.name)
-    .concat(P.materials.map((x) => x.name));
-
-  const toContact = (file, text, lead, extra) => {
-    setDraft({ file, text, lead, ...extra });
-
-    document.getElementById('contact').scrollIntoView();
-  };
-
   return (
     <>
-      <nav>
-        <div className="w nav">
-          <a className="logo" href="#">
-            <i>
-              <b />
-              <b />
-              <b />
-            </i>
-            {c.name}
-          </a>
-
-          <div className="links">
-          <a>Industries</a>
-          <a href="#quote">Instant quote</a>
-          <a href="#services">Services</a>
-          <a href="#how">How it works</a>
-          <a href="#about">About</a>
-          <a href="#faq">FAQ</a>
-          <a className="btn" href="#contact">
-            Send inquiry
-          </a>
-        </div>
-      </div>
-    </nav >
+      <Nav c={c} />
 
       <header className="hero">
         <div className="w">
@@ -1033,9 +795,9 @@ function Site() {
         </div>
       </header>
 
-  {/* Material and technology ticker intentionally disabled. */ }
+      <Showcase data={pg.home} />
 
-      <Quote c={c} P={P} onSend={toContact} />
+      <Quote c={c} P={P} />
 
       <section id="services">
         <div className="w">
@@ -1099,18 +861,8 @@ function Site() {
             {[
               ['Location', c.location],
               ['Hours', c.hours],
-              [
-                'Phone',
-                <a href={'tel:' + c.phone.replace(/\s/g, '')}>
-                  {c.phone}
-                </a>,
-              ],
-              [
-                'Email',
-                <a href={'mailto:' + c.email}>
-                  {c.email}
-                </a>,
-              ],
+              ['Phone', <a href={'tel:' + c.phone.replace(/\s/g, '')}>{c.phone}</a>],
+              ['Email', <a href={'mailto:' + c.email}>{c.email}</a>],
             ].map(([l, v]) => (
               <div key={l}>
                 <span>{l}</span>
@@ -1128,11 +880,7 @@ function Site() {
           <div className="faq">
             {c.faqs.map((f, i) => (
               <div key={i}>
-                <button
-                  onClick={() =>
-                    setOpen(open === i ? -1 : i)
-                  }
-                >
+                <button onClick={() => setOpen(open === i ? -1 : i)}>
                   {f.q}
                   <span>{open === i ? '−' : '+'}</span>
                 </button>
@@ -1144,7 +892,7 @@ function Site() {
         </div>
       </section>
 
-      <Contact c={c} draft={draft} />
+      <Contact c={c} />
 
       <Footer c={c} />
     </>
@@ -1157,12 +905,16 @@ export default function App() {
   const [h, setH] = useState(location.hash);
 
   useEffect(() => {
-    const f = () => setH(location.hash);
-
+    const f = () => {
+      setH(location.hash);
+      if (/^#\/[a-z]/i.test(location.hash)) window.scrollTo(0, 0);
+    };
     addEventListener('hashchange', f);
-
     return () => removeEventListener('hashchange', f);
   }, []);
 
-  return h === '#/admin' ? <Admin /> : <Site />;
+  const sub = h.match(/^#\/(industries|services|materials)/);
+  if (h === '#/admin') return <Admin />;
+  if (sub) return <SubPage key={sub[1]} route={sub[1]} />;
+  return <Site />;
 }

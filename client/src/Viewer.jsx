@@ -1,51 +1,27 @@
-// import { useEffect, useRef } from 'react';
-// import * as THREE from 'three';
-// import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-
-// export default function Viewer({ meshes }) {
-//   const ref = useRef();
-//   useEffect(() => {
-//     const el = ref.current, w = el.clientWidth, h = el.clientHeight;
-//     const r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-//     r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(w, h); el.appendChild(r.domElement);
-//     const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(38, w / h, 0.1, 20000);
-//     sc.add(new THREE.HemisphereLight(0xffffff, 0x334466, 1.3));
-//     const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(1, 2, 1.5); sc.add(dl);
-//     const g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: 0xc4602b, roughness: 0.55, metalness: 0.1 });
-//     meshes.forEach(m => {
-//       const bg = new THREE.BufferGeometry();
-//       bg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(m.attributes.position.array), 3));
-//       if (m.attributes.normal) bg.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(m.attributes.normal.array), 3));
-//       bg.setIndex(new THREE.BufferAttribute(new Uint32Array(m.index.array), 1));
-//       if (!m.attributes.normal) bg.computeVertexNormals();
-//       g.add(new THREE.Mesh(bg, mat));
-//     });
-//     g.rotation.x = -Math.PI / 2; sc.add(g); g.updateMatrixWorld(true);   // STEP is Z-up
-//     const b = new THREE.Box3().setFromObject(g), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
-//     const d = Math.max(s.x, s.y, s.z);
-//     g.position.set(-c.x, -b.min.y, -c.z);
-//     sc.add(new THREE.GridHelper(d * 3, 24, 0x3a5080, 0x25365a));
-//     cam.position.set(d * 1.5, d * 1.1, d * 1.7);
-//     const ctl = new OrbitControls(cam, r.domElement);
-//     ctl.target.set(0, s.y / 2, 0); ctl.autoRotate = true; ctl.autoRotateSpeed = 1.2; ctl.enableDamping = true;
-//     let id; const loop = () => { ctl.update(); r.render(sc, cam); id = requestAnimationFrame(loop); }; loop();
-//     return () => { cancelAnimationFrame(id); ctl.dispose(); r.dispose(); el.innerHTML = ''; mat.dispose(); g.children.forEach(x => x.geometry.dispose()); };
-//   }, [meshes]);
-//   return <div ref={ref} style={{ height: 420 }} />;
-// }
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export const HOLE_COL = { hole: '#d9534f', cbore: '#4a90e2', sel: '#f5a623' };
 
+const MQ = '(max-width:760px)';
+
 export default function Viewer({ meshes, holes = [], selected = null, onSelect, volume, checks = [], showHoles = true }) {
   const wrap = useRef(), cv = useRef(), g = useRef({});
   const [mode, setMode] = useState('3D'), [bg, setBg] = useState('white'), [holesOn, setHolesOn] = useState(true);
   const [xray, setXray] = useState(true), [box, setBox] = useState(false), [fs, setFs] = useState(false);
+  const [mob, setMob] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(MQ).matches);
   const dark = bg === 'black', ink = dark ? '#fff' : '#0f172a';
 
   useEffect(() => { g.current.onSelect = onSelect; });
+
+  /* ---- mobile breakpoint ---- */
+  useEffect(() => {
+    const mq = matchMedia(MQ);
+    const f = () => setMob(mq.matches);
+    mq.addEventListener('change', f);
+    return () => mq.removeEventListener('change', f);
+  }, []);
 
   /* ---- scene setup (re-runs when a new file is loaded) ---- */
   useEffect(() => {
@@ -137,30 +113,41 @@ export default function Viewer({ meshes, holes = [], selected = null, onSelect, 
     }
   }, [holes, selected, holesOn, showHoles, meshes]);
 
-  const btn = on => ({ border: 0, borderRadius: 12, padding: '10px 14px', cursor: 'pointer', font: '600 13px inherit', background: on ? '#2563eb' : 'rgba(255,255,255,.92)', color: on ? '#fff' : '#0f172a' });
-  const seg = on => ({ border: 0, padding: '9px 22px', cursor: 'pointer', font: '700 15px inherit', borderRadius: 999, background: on ? '#2563eb' : 'transparent', color: on ? '#fff' : '#0f172a' });
+  const btn = on => ({
+    border: 0, borderRadius: mob ? 10 : 12, padding: mob ? '8px 11px' : '10px 14px', cursor: 'pointer',
+    font: `600 ${mob ? 12 : 13}px inherit`, background: on ? '#2563eb' : 'rgba(255,255,255,.92)', color: on ? '#fff' : '#0f172a'
+  });
+  const seg = on => ({
+    border: 0, padding: mob ? '7px 16px' : '9px 22px', cursor: 'pointer', font: `700 ${mob ? 13 : 15}px inherit`,
+    borderRadius: 999, background: on ? '#2563eb' : 'transparent', color: on ? '#fff' : '#0f172a'
+  });
 
   return (
-    <div ref={wrap} style={{ position: 'relative', height: fs ? '100vh' : 460, borderRadius: 16, overflow: 'hidden', border: '1px solid #d6def5' }}>
+    <div ref={wrap} style={{ position: 'relative', height: fs ? '100vh' : mob ? 380 : 460, borderRadius: 16, overflow: 'hidden', border: '1px solid #d6def5' }}>
       <div ref={cv} style={{ position: 'absolute', inset: 0 }} />
 
+      {/* 2D / 3D toggle */}
       <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 2, background: 'rgba(255,255,255,.92)', borderRadius: 999, padding: 3 }}>
         {['2D', '3D'].map(k => <button key={k} style={seg(mode === k)} onClick={() => setMode(k)}>{k}</button>)}
       </div>
 
-      <div style={{ position: 'absolute', top: 62, left: 14, color: ink, font: '600 13px inherit' }}>
+      {/* Volume (+ colour picker on desktop only) */}
+      <div style={{ position: 'absolute', top: mob ? 56 : 62, left: 14, color: ink, font: `600 ${mob ? 12 : 13}px inherit` }}>
         Volume: {volume} mm³
-        <div style={{ marginTop: 10, background: 'rgba(255,255,255,.95)', border: '1.5px solid #0f172a', borderRadius: 10, padding: '8px 12px', color: '#0f172a' }}>
-          {[['white', '#fff'], ['black', '#000']].map(([k, c]) => (
-            <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0', cursor: 'pointer', fontSize: 15 }}>
-              <input type="radio" name="vbg" checked={bg === k} onChange={() => setBg(k)} style={{ display: 'none' }} />
-              <span style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: bg === k ? '3px solid #2563eb' : '1px solid #94a3b8' }} />
-              {k[0].toUpperCase() + k.slice(1)}
-            </label>))}
-        </div>
+        {!mob && (
+          <div style={{ marginTop: 10, background: 'rgba(255,255,255,.95)', border: '1.5px solid #0f172a', borderRadius: 10, padding: '8px 12px', color: '#0f172a' }}>
+            {[['white', '#fff'], ['black', '#000']].map(([k, c]) => (
+              <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0', cursor: 'pointer', fontSize: 15 }}>
+                <input type="radio" name="vbg" checked={bg === k} onChange={() => setBg(k)} style={{ display: 'none' }} />
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: bg === k ? '3px solid #2563eb' : '1px solid #94a3b8' }} />
+                {k[0].toUpperCase() + k.slice(1)}
+              </label>))}
+          </div>
+        )}
       </div>
 
-      {!!checks.length && (
+      {/* Geometry analysis (desktop only) */}
+      {!mob && !!checks.length && (
         <div style={{ position: 'absolute', top: 12, right: 12, textAlign: 'right', color: ink, font: '500 13px/1.9 inherit' }}>
           <b>Geometry analysis</b>
           {checks.map(c => (
@@ -170,7 +157,8 @@ export default function Viewer({ meshes, holes = [], selected = null, onSelect, 
         </div>
       )}
 
-      <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* Toolbar */}
+      <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10, display: 'flex', gap: mob ? 6 : 8, flexWrap: mob ? 'nowrap' : 'wrap', alignItems: 'center' }}>
         <button style={btn(false)} onClick={() => g.current.fit()}>Center</button>
         {showHoles && <button style={btn(holesOn)} onClick={() => setHolesOn(!holesOn)}>Holes</button>}
         <button style={btn(xray)} onClick={() => setXray(!xray)}>X-ray</button>

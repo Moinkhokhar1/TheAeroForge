@@ -3,9 +3,19 @@ const express = require('express'), multer = require('multer'), jwt = require('j
 
 const PORT = process.env.PORT || 5001;
 const SECRET = process.env.JWT_SECRET || 'change-this-secret';
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'moinkhokhar2730vdr@gmail.com').trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // CHANGE in production
 const DB = path.join(__dirname, 'data.json'), UP = path.join(__dirname, 'uploads');
+const DS = path.join(UP, 'datasheets');
+const IM = path.join(UP, 'images');
 fs.mkdirSync(UP, { recursive: true });
+fs.mkdirSync(DS, { recursive: true });
+fs.mkdirSync(IM, { recursive: true });
+
+const safeEq = (a, b) => {
+  const x = Buffer.from(String(a)), y = Buffer.from(String(b));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+};
 
 const defaults = {
   content: {
@@ -57,27 +67,117 @@ const defaults = {
       { name: 'TPU', desc: 'Flexible. Grips, gaskets, bumpers.', density: 1.21, pricePerGram: 5.5 }
     ]
   },
+  pages: {
+    industries: {
+      title: 'Industries that rely on 3D printing',
+      text: 'From the first prototype to production tooling, additive manufacturing shortens development time and cuts cost across sectors.',
+      items: [
+        { name: 'Automotive', desc: 'Faster design cycles and low-volume parts without tooling cost.', uses: 'Prototype brackets and housings\nJigs, fixtures and checking gauges\nCustom and replacement parts' },
+        { name: 'Electronics', desc: 'Enclosures and fixtures made to fit your board exactly.', uses: 'Device enclosures and mounts\nTest fixtures\nCable and connector holders' },
+        { name: 'Robotics', desc: 'Lightweight, custom parts that evolve with each design iteration.', uses: 'Grippers and end effectors\nChassis and brackets\nSensor mounts' },
+        { name: 'Food & Beverage', desc: 'Tooling and fixtures for processing and packaging lines.', uses: 'Custom guides and change parts\nPrototype packaging\nMolds and forming tools' },
+        { name: 'Aerospace', desc: 'Lightweight, complex geometry for prototyping and tooling.', uses: 'Ducting and housings\nFlight-test prototypes\nAssembly jigs' }
+      ]
+    },
+    services: {
+      title: 'Our services',
+      text: 'Manufacturing capabilities backed by engineers who review your design before it is printed.',
+      groupTitle: 'Advance Manufacturing',
+      groupText: 'Industrial additive manufacturing in metal and plastic.',
+      categories: [
+        { name: 'Metal 3D printing', desc: 'Strong, functional metal parts for demanding applications.' },
+        { name: 'Plastic 3D printing', desc: 'A range of plastic technologies, from quick prototypes to production-grade parts.' }
+      ],
+      technologies: [
+        { category: 'Metal 3D printing', name: 'DMLS / SLM', desc: 'Laser powder-bed fusion for dense, high-strength metal parts.' },
+        { category: 'Plastic 3D printing', name: 'FDM', desc: 'Fused deposition modeling. Economical, durable parts in engineering thermoplastics.' },
+        { category: 'Plastic 3D printing', name: 'SLA', desc: 'Stereolithography. Smooth surface finish and fine detail from liquid resin.' },
+        { category: 'Plastic 3D printing', name: 'MJF', desc: 'Multi Jet Fusion. Strong, consistent nylon parts, great for small batches.' }
+      ]
+    },
+    materials: {
+      title: 'Materials',
+      text: 'Choose a technology to see the materials we support and download their datasheets.',
+      technologies: [
+        { name: 'FDM', desc: 'Fused deposition modeling. Strong thermoplastic parts for prototypes and end-use.' },
+        { name: 'SLA', desc: 'Stereolithography. High detail and smooth surfaces using photopolymer resin.' },
+        { name: 'MJF', desc: 'Multi Jet Fusion. Durable nylon parts with consistent mechanical properties.' }
+      ],
+      items: [
+        { name: 'PLA', tech: 'FDM', desc: 'Best all-rounder for prototypes, models and display parts.', props: 'Density 1.24 g/cm³\nEasy to print', datasheet: '', datasheetName: '' },
+        { name: 'PETG', tech: 'FDM', desc: 'Tougher than PLA, handles light outdoor use.', props: 'Density 1.27 g/cm³\nGood chemical resistance', datasheet: '', datasheetName: '' },
+        { name: 'ABS', tech: 'FDM', desc: 'Heat resistant, easy to sand and finish.', props: 'Density 1.04 g/cm³\nHeat resistant', datasheet: '', datasheetName: '' },
+        { name: 'ASA', tech: 'FDM', desc: 'UV-stable, built for outdoor enclosures.', props: 'Density 1.07 g/cm³\nUV stable', datasheet: '', datasheetName: '' },
+        { name: 'Nylon', tech: 'FDM', desc: 'Strong and wear-resistant. Gears, hinges.', props: 'Density 1.14 g/cm³\nWear resistant', datasheet: '', datasheetName: '' },
+        { name: 'TPU', tech: 'FDM', desc: 'Flexible. Grips, gaskets, bumpers.', props: 'Density 1.21 g/cm³\nFlexible', datasheet: '', datasheetName: '' },
+        { name: 'Standard resin', tech: 'SLA', desc: 'Fine detail and smooth finish for visual models.', props: 'Smooth surface\nHigh detail', datasheet: '', datasheetName: '' },
+        { name: 'PA12 (Nylon 12)', tech: 'MJF', desc: 'Strong, durable functional parts and small batches.', props: 'Isotropic strength\nGood chemical resistance', datasheet: '', datasheetName: '' }
+      ]
+    }
+  },
   inquiries: []
 };
+
+defaults.pages.home = {
+  title: 'Recent work',
+  text: 'A look at parts we have printed for customers.',
+  slides: []
+};
+defaults.pages.industries.slides = [
+  { image: '', title: 'Built for your industry', text: 'From automotive to aerospace, we print parts that fit real production needs.' },
+  { image: '', title: 'Prototype to production', text: 'Iterate quickly without tooling cost.' }
+];
+defaults.pages.services.slides = [
+  { image: '', title: 'Advance manufacturing', text: 'Metal and plastic 3D printing under one roof.' },
+  { image: '', title: 'Engineer-reviewed', text: 'We check your design before we print it.' }
+];
+defaults.pages.materials.slides = [
+  { image: '', title: 'Engineering materials', text: 'Choose a technology, compare materials, download datasheets.' }
+];
+
 const load = () => {
   if (!fs.existsSync(DB)) return structuredClone(defaults);
   const d = JSON.parse(fs.readFileSync(DB, 'utf8'));
-  return { content: { ...defaults.content, ...d.content }, pricing: { ...defaults.pricing, ...d.pricing }, inquiries: d.inquiries || [] };
+  const pages = {};
+  for (const k of Object.keys(defaults.pages)) pages[k] = { ...defaults.pages[k], ...(d.pages || {})[k] };
+  return {
+    content: { ...defaults.content, ...d.content },
+    pricing: { ...defaults.pricing, ...d.pricing },
+    pages,
+    inquiries: d.inquiries || []
+  };
 };
 const save = d => fs.writeFileSync(DB, JSON.stringify(d, null, 2));
 if (!fs.existsSync(DB)) save(defaults);
 
+const rnd = (f) => crypto.randomBytes(8).toString('hex') + path.extname(f.originalname).toLowerCase();
+
+// Inquiry uploads (STEP file + drawings)
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: UP,
-    filename: (_, f, cb) => cb(null, crypto.randomBytes(8).toString('hex') + path.extname(f.originalname).toLowerCase())
-  }),
+  storage: multer.diskStorage({ destination: UP, filename: (_, f, cb) => cb(null, rnd(f)) }),
   limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (_, f, cb) =>
     /\.(step|stp|stl|3mf|obj|pdf|zip|dxf|dwg|png|jpg|jpeg)$/i.test(f.originalname)
       ? cb(null, true)
       : cb(new Error('Allowed files: STEP, STL, 3MF, OBJ, PDF, ZIP, DXF, DWG, PNG, JPG'))
 });
+
+// Material datasheet PDFs (admin)
+const uploadSheet = multer({
+  storage: multer.diskStorage({ destination: DS, filename: (_, f, cb) => cb(null, rnd(f)) }),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_, f, cb) =>
+    /\.pdf$/i.test(f.originalname) ? cb(null, true) : cb(new Error('Datasheet must be a PDF'))
+});
+
+// Page images (admin)
+const uploadImage = multer({
+  storage: multer.diskStorage({ destination: IM, filename: (_, f, cb) => cb(null, rnd(f)) }),
+  limits: { fileSize: 6 * 1024 * 1024 },
+  fileFilter: (_, f, cb) =>
+    /\.(jpe?g|png|webp|gif)$/i.test(f.originalname) ? cb(null, true) : cb(new Error('Image must be JPG, PNG, WEBP or GIF'))
+});
+
 const app = express();
 app.use(cors()); app.use(express.json({ limit: '1mb' }));
 
@@ -87,7 +187,20 @@ const auth = (req, res, next) => {
 };
 
 // ---------- Public ----------
-app.get('/api/content', (_, res) => { const { content, pricing } = load(); res.json({ content, pricing }); });
+app.get('/api/content', (_, res) => { const { content, pricing, pages } = load(); res.json({ content, pricing, pages }); });
+
+app.get('/api/datasheets/:file', (req, res) => {
+  const f = path.join(DS, path.basename(req.params.file));
+  if (!fs.existsSync(f)) return res.status(404).end();
+  res.type('application/pdf').sendFile(f);
+});
+
+app.get('/api/images/:file', (req, res) => {
+  const f = path.join(IM, path.basename(req.params.file));
+  if (!fs.existsSync(f)) return res.status(404).end();
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.sendFile(f);
+});
 
 app.post('/api/inquiries', (req, res) =>
   upload.fields([{ name: 'file', maxCount: 1 }, { name: 'drawings', maxCount: 5 }])(req, res, err => {
@@ -129,12 +242,34 @@ app.post('/api/inquiries', (req, res) =>
 
 // ---------- Admin ----------
 app.post('/api/login', (req, res) => {
-  if (req.body?.password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Wrong password' });
+  const { email = '', password = '' } = req.body || {};
+  const okEmail = safeEq(String(email).trim().toLowerCase(), ADMIN_EMAIL);
+  const okPass = safeEq(password, ADMIN_PASSWORD);
+  if (!okEmail || !okPass) return res.status(401).json({ error: 'Wrong email or password' });
   res.json({ token: jwt.sign({ admin: true }, SECRET, { expiresIn: '12h' }) });
 });
+
 app.get('/api/admin/data', auth, (_, res) => res.json(load()));
 app.put('/api/admin/content', auth, (req, res) => { const d = load(); d.content = req.body; save(d); res.json({ ok: true }); });
 app.put('/api/admin/pricing', auth, (req, res) => { const d = load(); d.pricing = req.body; save(d); res.json({ ok: true }); });
+app.put('/api/admin/pages', auth, (req, res) => { const d = load(); d.pages = req.body; save(d); res.json({ ok: true }); });
+
+app.post('/api/admin/datasheet', auth, (req, res) =>
+  uploadSheet.single('file')(req, res, err => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'File is larger than 15 MB' : err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file received' });
+    res.json({ file: req.file.filename, fileName: req.file.originalname });
+  })
+);
+
+app.post('/api/admin/image', auth, (req, res) =>
+  uploadImage.single('file')(req, res, err => {
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Image is larger than 6 MB' : err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file received' });
+    res.json({ file: req.file.filename });
+  })
+);
+
 app.get('/api/admin/files/:name', auth, (req, res) => {
   let found = null;
   for (const i of load().inquiries) {
@@ -145,10 +280,13 @@ app.get('/api/admin/files/:name', auth, (req, res) => {
   if (!found) return res.status(404).end();
   res.download(path.join(UP, found.file), found.fileName);
 });
+
 app.patch('/api/admin/inquiries/:id', auth, (req, res) => {
   const d = load(), q = d.inquiries.find(i => i.id === req.params.id);
-  if (q) q.status = req.body.status; save(d); res.json({ ok: true });
+  if (q) q.status = req.body.status;
+  save(d); res.json({ ok: true });
 });
+
 app.delete('/api/admin/inquiries/:id', auth, (req, res) => {
   const d = load(), q = d.inquiries.find(i => i.id === req.params.id);
   if (q?.file) fs.unlink(path.join(UP, q.file), () => {});

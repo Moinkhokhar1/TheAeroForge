@@ -1,0 +1,21 @@
+{
+  "name": "The Aero Forge",
+  "short_name": "Aero Forge",
+  "description": "From STEP file to printed part. Custom 3D printing in Vadodara, Gujarat.",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#131a2b",
+  "background_color": "#131a2b",
+  "display": "standalone",
+  "start_url": "/"
+}

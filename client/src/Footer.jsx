@@ -31,7 +31,10 @@ export default function Footer({ c }) {
       <div className="w">
         <div className="ft-grid">
           <div>
-            <a className="ft-logo" href="#"><i><b /><b /><b /></i>{c.name}</a>
+            <a className="ft-logo" href="#/">
+              <img src="/assets/icon-512.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 10 }} />
+              {c.name}
+            </a>
             <p className="ft-about">{about}</p>
             <a className="ft-wa" href={wa} target="_blank" rel="noreferrer">Chat on WhatsApp</a>
           </div>
