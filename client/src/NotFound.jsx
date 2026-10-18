@@ -49,7 +49,6 @@ export default function NotFound() {
 
           <div className="cta" style={{ justifyContent: 'center' }}>
             <a className="btn big" href="/">Back to home</a>
-            {/* <a className="btn big o" href="/#quote">Get an instant quote</a> */}
           </div>
         </div>
       </section>
