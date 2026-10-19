@@ -986,7 +986,8 @@ export default function App() {
   const badPath = p !== '' && p !== '/index.html';
 
   // "#/something" that isn't a known route. Plain anchors like #quote are fine.
-  const badHash = /^#\/./.test(h) && h !== '#/admin' && !sub;
+  // "#/?s=quote" is the home page scrolled to a section, so it is not a bad route.
+  const badHash = /^#\/[^?]/.test(h) && h !== '#/admin' && !sub;
 
   if (badPath || badHash) return <NotFound />;
   if (h === '#/admin') return <Admin />;

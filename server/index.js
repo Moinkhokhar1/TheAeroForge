@@ -296,14 +296,23 @@ app.delete('/api/admin/inquiries/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
-// Unknown API routes get JSON, everything else gets the SPA with a 404 status
+const dist = path.join(__dirname, '../client/dist');
+const indexHtml = path.join(dist, 'index.html');
+
+// Static files must be served BEFORE the catch-all below, otherwise every
+// request (including /assets/*.js) hits the 404 handler and the page is blank.
+if (fs.existsSync(dist)) app.use(express.static(dist));
+
+// Unknown API routes get JSON
+app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
+// Homepage gets 200; any other unknown path gets the SPA with a 404 status
 app.use((req, res) => {
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ error: 'Not found' });
+  if (!fs.existsSync(indexHtml)) {
+    return res.status(404).type('text/plain').send('Client build not found. Run "npm run build" in /client first.');
   }
-  res.status(404).sendFile(path.join(__dirname, '../client/dist/index.html'));
+  const isHome = req.path === '/' || req.path === '/index.html';
+  res.status(isHome ? 200 : 404).sendFile(indexHtml);
 });
 
-const dist = path.join(__dirname, '../client/dist');
-if (fs.existsSync(dist)) { app.use(express.static(dist)); app.get('*', (_, res) => res.sendFile(path.join(dist, 'index.html'))); }
 app.listen(PORT, () => console.log('Server on :' + PORT));
