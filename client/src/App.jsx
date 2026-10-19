@@ -827,7 +827,7 @@ function Site() {
   const P = normPricing(d.pricing);
   const pg = d.pages || {};
 
-  document.title = c.name + ' | The AeroForge';
+  document.title = c.name + ' | 3D printing service';
 
   return (
     <>

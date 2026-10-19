@@ -60,14 +60,14 @@ export default function Nav({ c }) {
     <>
       <nav>
         <div className="w nav">
-            <a className="logo" href="#/">
+            <a className="logo" href="#/" onClick={(e) => goHome('top', e)}>
               <img src="/assets/icon-512.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 10 }} />
               {c.name}
             </a>
 
           <div className="links">
             {LINKS.map((l, i) => link(l, i))}
-            <a className="btn" href="#/" onClick={(e) => goHome('contact', e)}>Send inquiry</a>
+            <a className="btn" href="/inquery" onClick={(e) => goHome('contact', e)}>Send inquiry</a>
           </div>
 
           <button
