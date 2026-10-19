@@ -4,6 +4,7 @@ import { normContent } from './defaults.js';
 import Nav, { goHome } from './Nav.jsx';
 import Footer from './Footer.jsx';
 import Carousel, { imgUrl } from './Carousel.jsx';
+import Loader, { useSplash, SplashExit } from './Loader.jsx';
 
 const A = (x) => (Array.isArray(x) ? x : []);
 const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
@@ -240,13 +241,14 @@ export function Showcase({ data }) {
 export default function SubPage({ route }) {
   const [d, setD] = useState(null);
   const [err, setErr] = useState('');
+  const splash = useSplash();
 
   useEffect(() => {
     api('/content').then(setD).catch((e) => setErr(e.message));
   }, []);
 
   if (err) return <p style={{ padding: 40 }}>Can't reach the server: {err}</p>;
-  if (!d) return <p style={{ padding: 40 }}>Loading…</p>;
+  if (!d || splash.wait) return <Loader />;
 
   const c = normContent(d.content);
   const pg = d.pages || {};
@@ -255,6 +257,7 @@ export default function SubPage({ route }) {
 
   return (
     <>
+      <SplashExit on={splash.fade} />
       <Nav c={c} />
       <View data={pg[route] || {}} />
       <Footer c={c} />

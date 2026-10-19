@@ -9,6 +9,7 @@ import SubPage, { Showcase } from './Pages.jsx';
 import { normPricing, normContent } from './defaults.js';
 import { detectHoles, geometryChecks, fitLabel } from './analyze.js';
 import NotFound from './NotFound.jsx';
+import Loader, { useSplash, SplashExit } from './Loader.jsx';
 
 /* ---- STEP measuring (runs fully in the browser via OpenCascade WASM) ---- */
 
@@ -808,6 +809,7 @@ function Site() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState('');
   const [open, setOpen] = useState(0);
+  const splash = useSplash();
 
   useEffect(() => {
     api('/content')
@@ -819,8 +821,8 @@ function Site() {
     return <p style={{ padding: 40 }}>Can't reach the server: {err}</p>;
   }
 
-  if (!d) {
-    return <p style={{ padding: 40 }}>Loading…</p>;
+  if (!d || splash.wait) {
+    return <Loader />;
   }
 
   const c = normContent(d.content);
@@ -831,6 +833,7 @@ function Site() {
 
   return (
     <>
+      <SplashExit on={splash.fade} />
       <Nav c={c} />
 
       <header className="hero">

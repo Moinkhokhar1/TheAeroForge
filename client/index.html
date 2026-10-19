@@ -16,10 +16,54 @@
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
     <link rel="manifest" href="/assets/site.webmanifest">
     <meta name="theme-color" content="#131a2b">
+
+    <!-- Loading screen. Shown from first paint until React mounts; src/Loader.jsx
+         reuses these same classes for in-app loading, so keep the two in sync. -->
+    <style>
+        .ld { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; text-align: center; color: #fff; background-color: #111a2c; background-image: linear-gradient(#18233a 1px, transparent 1px), linear-gradient(90deg, #18233a 1px, transparent 1px); background-size: 56px 56px }
+        .ld.soft { animation: ld-in .3s .15s both }
+        .ld-print { position: relative; width: 150px; height: 104px; animation: ld-fade 2.8s linear infinite }
+        .ld-plate { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; border-radius: 2px; background: #34415c }
+        .ld-stack { position: absolute; left: 0; right: 0; bottom: 10px; height: 68px; display: flex; flex-direction: column; align-items: center; gap: 4px; animation: ld-rise 2.8s steps(6, end) infinite }
+        .ld-stack b { flex: none; display: block; height: 8px; border-radius: 4px; background: #ee6a30 }
+        .ld-head { position: absolute; left: 0; right: 0; bottom: 8px; height: 16px; animation: ld-lift 2.8s steps(6, end) infinite }
+        .ld-head i { position: absolute; left: 50%; top: 0; width: 14px; height: 16px; margin-left: -7px; background: #fff; clip-path: polygon(0 0, 100% 0, 100% 55%, 62% 100%, 38% 100%, 0 55%); animation: ld-sweep .9s ease-in-out infinite alternate }
+        .ld-brand { display: flex; align-items: center; gap: 12px; font: 800 1.5rem 'Bricolage Grotesque', system-ui, sans-serif; letter-spacing: -.02em }
+        .ld-brand img { width: 40px; height: 40px; object-fit: contain; border-radius: 10px }
+        .ld-txt { margin: 0; font: 500 .78rem 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: .16em; text-transform: uppercase; color: #aab3c5 }
+        .ld-print, .ld-stack, .ld-head, .ld-head i { animation-delay: var(--ld-t, 0s) }
+        .ld.out { animation: ld-out .6s ease-out forwards; pointer-events: none }
+        .ld.out .ld-print { display: none }
+        @keyframes ld-out { to { opacity: 0; visibility: hidden } }
+        @keyframes ld-in { from { opacity: 0 } }
+        @keyframes ld-fade { 0% { opacity: 0 } 5%, 86% { opacity: 1 } 98%, 100% { opacity: 0 } }
+        @keyframes ld-rise { 0% { clip-path: inset(100% 0 0 0) } 70%, 100% { clip-path: inset(0) } }
+        @keyframes ld-lift { 0% { transform: translateY(0) } 70%, 100% { transform: translateY(-72px) } }
+        @keyframes ld-sweep { from { transform: translateX(-26px) } to { transform: translateX(26px) } }
+        @media (prefers-reduced-motion: reduce) {
+            .ld-print, .ld-stack, .ld-head, .ld-head i { animation: none }
+            .ld-head { display: none }
+        }
+    </style>
+    <noscript><style>.ld { display: none }</style></noscript>
 </head>
 
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div class="ld" role="status" aria-live="polite" aria-label="Loading">
+            <div class="ld-print" aria-hidden="true">
+                <div class="ld-head"><i></i></div>
+                <div class="ld-stack">
+                    <b style="width:40px"></b><b style="width:64px"></b><b style="width:84px"></b>
+                    <b style="width:100px"></b><b style="width:112px"></b><b style="width:124px"></b>
+                </div>
+                <div class="ld-plate"></div>
+            </div>
+            <div class="ld-brand"><img src="/assets/icon-512.png" alt="" /><span>The AeroForge</span></div>
+            <p class="ld-txt">Preparing your print</p>
+        </div>
+    </div>
+    <script>window.__ld0 = performance.now()</script>
     <script type="module" src="/src/main.jsx"></script>
 </body>
 
