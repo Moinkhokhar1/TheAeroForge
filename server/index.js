@@ -286,7 +286,7 @@ app.post('/api/inquiries', inquiryLimit, (req, res) =>
     const files = req.files || {};
     const main = (files.file || [])[0];
     const drawings = files.drawings || [];
-    const cleanup = () => [main, ...drawings].filter(Boolean).forEach(f => fs.unlink(f.path, () => {}));
+    const cleanup = () => [main, ...drawings].filter(Boolean).forEach(f => fs.unlink(f.path, () => { }));
 
     if (err) {
       cleanup();
@@ -371,7 +371,7 @@ app.post('/api/admin/image', auth, (req, res) =>
         const out = file.replace(/\.[^.]+$/, '') + '.webp';
         await sharp(req.file.path).rotate().resize({ width: 1800, height: 1800, fit: 'inside', withoutEnlargement: true })
           .webp({ quality: 80 }).toFile(path.join(IM, out));
-        fs.unlink(req.file.path, () => {});
+        fs.unlink(req.file.path, () => { });
         file = out;
       } catch (e) { /* keep the original upload */ }
     }
@@ -398,8 +398,8 @@ app.patch('/api/admin/inquiries/:id', auth, (req, res) => {
 
 app.delete('/api/admin/inquiries/:id', auth, (req, res) => {
   const d = load(), q = d.inquiries.find(i => i.id === req.params.id);
-  if (q?.file) fs.unlink(path.join(UP, q.file), () => {});
-  (q?.drawings || []).forEach(f => fs.unlink(path.join(UP, f.file), () => {}));
+  if (q?.file) fs.unlink(path.join(UP, q.file), () => { });
+  (q?.drawings || []).forEach(f => fs.unlink(path.join(UP, f.file), () => { }));
   d.inquiries = d.inquiries.filter(i => i.id !== req.params.id);
   save(d);
   res.json({ ok: true });
