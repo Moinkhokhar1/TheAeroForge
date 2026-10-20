@@ -11,16 +11,18 @@ const css = `
 .ft-logo i b{display:block;height:4px;border-radius:2px;background:#ee6a30}
 .ft-logo i b:nth-child(1){width:20px}.ft-logo i b:nth-child(2){width:14px}.ft-logo i b:nth-child(3){width:8px}
 .ft-about{color:#9aa7c2;max-width:380px;margin:20px 0 26px}
-.ft-wa{display:inline-block;background:#ee6a30;color:#fff!important;padding:13px 26px;border-radius:99px;font-weight:700}
+.ft-wa{display:inline-block;background:#c2410c;color:#fff!important;padding:13px 26px;border-radius:99px;font-weight:700}
 .ft h4{font:700 .85rem 'Hanken Grotesk',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9aa7c2;margin:0 0 22px}
 .ft-links{display:grid;gap:14px}
 .ft-links a{color:#e4e9f4;transition:color .15s}.ft-links a:hover{color:#ee6a30}
 .ft-rows{display:grid;gap:18px}
 .ft-rows span{display:block;color:#9aa7c2;font-size:.9rem}.ft-rows b{font-weight:600;color:#fff}
 .ft-bar{border-top:1px solid #1d2a44;padding:26px 0;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#9aa7c2;font-size:.92rem}
-.ft-bar a:hover{color:#ee6a30}.ft-bar div{display:flex;gap:22px}
+.ft-bar a:hover,.ft-ck:hover{color:#ee6a30}.ft-bar div{display:flex;gap:22px;flex-wrap:wrap}.ft-ck{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}.ft-bar a,.ft-ck{text-decoration:underline;text-underline-offset:3px}
 @media(max-width:900px){.ft-grid{grid-template-columns:1fr;gap:40px}}
 `;
+
+import { go, goHome } from './router.js';
 
 export default function Footer({ c }) {
   const wa = 'https://wa.me/' + (c.phone || '').replace(/\D/g, '');
@@ -31,23 +33,23 @@ export default function Footer({ c }) {
       <div className="w">
         <div className="ft-grid">
           <div>
-            <a className="ft-logo" href="#/">
-              <img src="/assets/icon-512.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 10 }} />
+            <a className="ft-logo" href="/" onClick={(e) => goHome('top', e)}>
+              <img src="/assets/logo-96.png" alt="" width="40" height="40" style={{ objectFit: 'contain', borderRadius: 10 }} />
               {c.name}
             </a>
             <p className="ft-about">{about}</p>
-            <a className="ft-wa" href={wa} target="_blank" rel="noreferrer">Chat on WhatsApp</a>
+            <a className="ft-wa" href={wa} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
           </div>
 
           <div>
             <h4>Explore</h4>
             <div className="ft-links">
-              <a href="#quote">Instant quote</a>
-              <a href="#services">Services</a>
-              <a href="#how">How it works</a>
-              <a href="#about">About</a>
-              <a href="#faq">FAQ</a>
-              <a href="#contact">Send inquiry</a>
+              <a href="/#quote" onClick={(e) => goHome('quote', e)}>Request a quote</a>
+              <a href="/services" onClick={(e) => go('/services', e)}>Services</a>
+              <a href="/#how" onClick={(e) => goHome('how', e)}>How it works</a>
+              <a href="/#about" onClick={(e) => goHome('about', e)}>About</a>
+              <a href="/#faq" onClick={(e) => goHome('faq', e)}>FAQ</a>
+              <a href="/#contact" onClick={(e) => goHome('contact', e)}>Contact</a>
             </div>
           </div>
 
@@ -64,6 +66,11 @@ export default function Footer({ c }) {
 
         <div className="ft-bar">
           <span>© {new Date().getFullYear()} {c.name}. All rights reserved.</span>
+          <div>
+            <a href="/privacy" onClick={(e) => go('/privacy', e)}>Privacy Policy</a>
+            <a href="/terms" onClick={(e) => go('/terms', e)}>Terms &amp; Conditions</a>
+            <button type="button" className="ft-ck" onClick={() => dispatchEvent(new Event('cookie-settings'))}>Cookie settings</button>
+          </div>
         </div>
       </div>
     </footer>

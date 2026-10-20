@@ -60,8 +60,9 @@ export default function Carousel({ slides, auto = 5500, variant = 'hero' }) {
             {imgUrl(s.image) && (
               <img
                 src={imgUrl(s.image)}
-                alt={s.title || ''}
+                alt={s.alt || s.title || '3D printed part by The Aero Forge'}
                 loading={k ? 'lazy' : 'eager'}
+                decoding="async"
                 draggable={false}
               />
             )}

@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react';
-import { api, Inp } from './lib.jsx';
-import Viewer, { HOLE_COL } from './Viewer.jsx';
-import Admin from './Admin.jsx';
+import { useState, useEffect, useRef, useId, lazy, Suspense } from 'react';
+import { api, Inp, HoneyPot } from './lib.jsx';
+import { HOLE_COL } from './holeColors.js';
 import Footer from './Footer.jsx';
+import CookieBanner from './CookieBanner.jsx';
+import Legal from './Legal.jsx';
+import { go, goHome, routeName, fixLegacy, SUB, LEGAL } from './router.js';
+import { useSeo, pageSeo } from './seo.js';
+import { track } from './analytics.js';
 import './pages.css';
 import Nav from './Nav.jsx';
 import SubPage, { Showcase } from './Pages.jsx';
@@ -10,6 +14,11 @@ import { normPricing, normContent } from './defaults.js';
 import { detectHoles, geometryChecks, fitLabel } from './analyze.js';
 import NotFound from './NotFound.jsx';
 import Loader, { useSplash, SplashExit } from './Loader.jsx';
+
+// three.js (the 3D viewer) and the admin panel are big and most visitors never need them,
+// so they are downloaded only when used.
+const Viewer = lazy(() => import('./Viewer.jsx'));
+const Admin = lazy(() => import('./Admin.jsx'));
 
 /* ---- STEP measuring (runs fully in the browser via OpenCascade WASM) ---- */
 
@@ -125,18 +134,21 @@ const forTech = (P, t) => {
   return { mats: f(P.materials), quals: f(P.qualities) };
 };
 
-const Sel = ({ label, value, onChange, opts }) => (
-  <>
-    <label>{label}</label>
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
-      {opts.map(([v, l]) => (
-        <option key={v} value={v}>
-          {l}
-        </option>
-      ))}
-    </select>
-  </>
-);
+const Sel = ({ label, value, onChange, opts }) => {
+  const id = useId();
+  return (
+    <>
+      <label htmlFor={id}>{label}</label>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
+        {opts.map(([v, l]) => (
+          <option key={v} value={v}>
+            {l}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+};
 
 /* ---- Detected holes list ---- */
 
@@ -249,6 +261,8 @@ function Quote({ c, P }) {
   });
 
   const [modal, setModal] = useState(false);
+  const [hp, setHp] = useState('');
+  const openedAt = useRef(Date.now());
   const [done, setDone] = useState(false);
   const [note, setNote] = useState('');
   const [fe, setFe] = useState('');
@@ -363,6 +377,7 @@ function Quote({ c, P }) {
     if (!m) return setNote('Upload a STEP file first.');
     setNote('');
     setFe('');
+    openedAt.current = Date.now();
     setModal(true);
   };
 
@@ -392,6 +407,8 @@ function Quote({ c, P }) {
       fd.append('email', email.trim());
       fd.append('phone', phone.trim());
       fd.append('topic', 'Instant quote');
+      fd.append('hp_url', hp);
+      fd.append('elapsed', String(Date.now() - openedAt.current));
       fd.append('message', summary() + (big ? ' (File is over 15 MB, so it was not attached.)' : ''));
       if (notes.trim()) fd.append('notes', notes.trim());
       if (!big) fd.append('file', file);
@@ -403,6 +420,7 @@ function Quote({ c, P }) {
         'lead',
         JSON.stringify({ name: name.trim(), email: email.trim(), phone: phone.trim() })
       );
+      track('generate_lead', { method: 'quote_tool' });
       setModal(false);
       setDone(true);
     } catch (x) {
@@ -444,21 +462,23 @@ function Quote({ c, P }) {
               </svg>
               <h3>{busy ? 'Measuring your model…' : 'Drop your STEP file here'}</h3>
               <p>or click to browse (.step, .stp, up to 50 MB)</p>
-              {err && <p className="err">{err}</p>}
+              {err && <p className="err" role="alert">{err}</p>}
               <input hidden type="file" accept=".step,.stp" onChange={(ev) => pick(ev.target.files[0])} />
             </label>
           ) : (
             <div>
               <div className="vbox">
-                <Viewer
-                  meshes={m.meshes}
-                  holes={m.holes}
-                  selected={sel}
-                  onSelect={setSel}
-                  volume={(ms.vol * 1000).toFixed(2)}
-                  checks={checks}
-                  showHoles={c.showHoles !== 'no'}
-                />
+                <Suspense fallback={<p className="mut" style={{ padding: 40, textAlign: 'center' }}>Loading 3D viewer…</p>}>
+                  <Viewer
+                    meshes={m.meshes}
+                    holes={m.holes}
+                    selected={sel}
+                    onSelect={setSel}
+                    volume={(ms.vol * 1000).toFixed(2)}
+                    checks={checks}
+                    showHoles={c.showHoles !== 'no'}
+                  />
+                </Suspense>
                 <div className="vfoot">
                   <span>{file.name}</span>
                   <button className="lnk" onClick={resetAll}>
@@ -568,24 +588,26 @@ function Quote({ c, P }) {
         {/* Contact details popup */}
         {modal && (
           <div className="mback" onClick={() => setModal(false)}>
-            <div className="modal" role="dialog" aria-modal="true" onClick={(ev) => ev.stopPropagation()}>
+            <div className="modal" role="dialog" aria-modal="true" aria-label="Your contact details" onClick={(ev) => ev.stopPropagation()}>
               <button className="mx" aria-label="Close" onClick={() => setModal(false)}>×</button>
 
               <h3>Your contact details</h3>
               <p className="mut">So we know where to send your quote.</p>
 
-              <Inp label="Full name" value={lf.name} onChange={(v) => setLf({ ...lf, name: v })} autoComplete="name" />
-              <Inp label="Email" type="email" value={lf.email} onChange={(v) => setLf({ ...lf, email: v })} autoComplete="email" />
+              <HoneyPot value={hp} onChange={setHp} />
+              <Inp label="Full name" value={lf.name} onChange={(v) => setLf({ ...lf, name: v })} autoComplete="name" required />
+              <Inp label="Email" type="email" value={lf.email} onChange={(v) => setLf({ ...lf, email: v })} autoComplete="email" required />
               <Inp
                 label="Mobile number"
                 type="tel"
                 value={lf.phone}
                 onChange={(v) => setLf({ ...lf, phone: v })}
                 autoComplete="tel"
+                required
                 onKeyDown={(ev) => ev.key === 'Enter' && submit()}
               />
 
-              {fe && <p className="err">{fe}</p>}
+              {fe && <p className="err" role="alert">{fe}</p>}
 
               <button className="btn full" disabled={lb} onClick={submit}>
                 {lb ? 'Sending…' : 'Send inquiry'}
@@ -637,23 +659,54 @@ function Contact({ c }) {
 
   const [f, setF] = useState(blank);
   const [file, setFile] = useState(null);
+  const [errs, setErrs] = useState({});
   const [s, setS] = useState({});
   const [busy, setBusy] = useState(false);
+  const [hp, setHp] = useState('');
+  const t0 = useRef(Date.now());
+  const topicId = useId();
+  const fileId = useId();
 
-  const submit = async () => {
+  const validate = () => {
+    const e = {};
+    if (f.name.trim().length < 2) e.name = 'Please enter your name.';
+    if (!/^\S+@\S+\.\S+$/.test(f.email.trim())) e.email = 'Please enter a valid email address.';
+    if (f.phone.trim() && f.phone.replace(/\D/g, '').length < 10) e.phone = 'Please enter a valid phone number (at least 10 digits).';
+    if (f.message.trim().length < 10) e.message = 'Please tell us a little more (at least 10 characters).';
+    if (file) {
+      if (!/\.(step|stp|stl|3mf|obj|pdf|zip)$/i.test(file.name)) e.file = 'Please attach a STEP, STL, 3MF, OBJ, PDF or ZIP file.';
+      else if (file.size > 15 * 1048576) e.file = 'That file is larger than 15 MB.';
+    }
+    return e;
+  };
+
+  const submit = async (ev) => {
+    ev.preventDefault();
+    const e = validate();
+    setErrs(e);
+    setS({});
+
+    if (Object.keys(e).length) {
+      // jump to the first problem so keyboard and screen-reader users land on it
+      setTimeout(() => document.querySelector('#contact [aria-invalid="true"]')?.focus(), 0);
+      return;
+    }
+
     const fd = new FormData();
-
-    Object.entries(f).forEach(([k, v]) => fd.append(k, v));
+    Object.entries(f).forEach(([k, v]) => fd.append(k, v.trim()));
+    fd.append('hp_url', hp);
+    fd.append('elapsed', String(Date.now() - t0.current));
     if (file) fd.append('file', file);
 
     setBusy(true);
-    setS({});
 
     try {
       await api('/inquiries', { method: 'POST', body: fd });
+      track('generate_lead', { method: 'contact_form' });
       setS({ ok: 'Thanks! We will get back to you within a few hours.' });
       setF(blank);
       setFile(null);
+      t0.current = Date.now();
     } catch (x) {
       setS({ err: x.message });
     }
@@ -685,17 +738,19 @@ function Contact({ c }) {
           </div>
         </div>
 
-        <div className="qcardfooter form">
+        <form className="qcardfooter form" onSubmit={submit} noValidate>
+          <HoneyPot value={hp} onChange={setHp} />
+
           <div className="row2">
-            <Inp label="Your name" value={f.name} onChange={set('name')} />
-            <Inp label="Phone" value={f.phone} onChange={set('phone')} />
+            <Inp label="Your name *" value={f.name} onChange={set('name')} error={errs.name} autoComplete="name" maxLength={100} required />
+            <Inp label="Phone" type="tel" value={f.phone} onChange={set('phone')} error={errs.phone} autoComplete="tel" maxLength={30} />
           </div>
 
-          <Inp label="Email" type="email" value={f.email} onChange={set('email')} />
+          <Inp label="Email *" type="email" value={f.email} onChange={set('email')} error={errs.email} autoComplete="email" maxLength={120} required />
 
-          <label>What do you need?</label>
+          <label htmlFor={topicId}>What do you need?</label>
 
-          <select value={f.topic} onChange={(e) => set('topic')(e.target.value)}>
+          <select id={topicId} value={f.topic} onChange={(e) => set('topic')(e.target.value)}>
             {[
               'Custom print job',
               'Small-batch production',
@@ -707,32 +762,46 @@ function Contact({ c }) {
           </select>
 
           <Inp
-            label="Message"
+            label="Message *"
             area
             value={f.message}
+            error={errs.message}
             placeholder="Material, quantity, deadline, anything we should know."
             onChange={set('message')}
+            maxLength={4000}
+            required
           />
 
-          <label>Attach a file (optional)</label>
+          <label htmlFor={fileId}>Attach a file (optional)</label>
 
           <input
+            id={fileId}
             type="file"
             accept=".step,.stp,.stl,.3mf,.obj,.pdf,.zip"
+            aria-invalid={errs.file ? 'true' : undefined}
+            aria-describedby={errs.file ? fileId + '-e' : undefined}
             onChange={(e) => setFile(e.target.files[0] || null)}
           />
 
-          {file && <p className="mut sm">📎 {file.name} will be sent with your inquiry.</p>}
+          {errs.file && <p className="err sm" id={fileId + '-e'} role="alert">{errs.file}</p>}
+          {file && !errs.file && <p className="mut sm">📎 {file.name} will be sent with your inquiry.</p>}
 
           <p className="mut sm">STEP, STL, 3MF, OBJ, PDF or ZIP, up to 15 MB.</p>
 
-          <button className="btn full" disabled={busy} onClick={submit}>
+          <button className="btn full" type="submit" disabled={busy}>
             {busy ? 'Sending…' : 'Send inquiry'}
           </button>
 
-          {s.ok && <p className="ok">{s.ok}</p>}
-          {s.err && <p className="err">{s.err}</p>}
-        </div>
+          <p className="mut sm" style={{ marginTop: 14 }}>
+            By sending this you agree to our{' '}
+            <a href="/privacy" onClick={(e) => go('/privacy', e)}>Privacy Policy</a>.
+          </p>
+
+          <div aria-live="polite">
+            {s.ok && <p className="ok">{s.ok}</p>}
+            {s.err && <p className="err" role="alert">{s.err}</p>}
+          </div>
+        </form>
       </div>
     </section>
   );
@@ -811,6 +880,8 @@ function Site() {
   const [open, setOpen] = useState(0);
   const splash = useSplash();
 
+  useSeo(pageSeo('home', d?.content?.name || 'The Aero Forge'));
+
   useEffect(() => {
     api('/content')
       .then(setD)
@@ -829,13 +900,12 @@ function Site() {
   const P = normPricing(d.pricing);
   const pg = d.pages || {};
 
-  document.title = c.name + ' | 3D printing service';
-
   return (
     <>
       <SplashExit on={splash.fade} />
       <Nav c={c} />
 
+      <main id="main">
       <header className="hero">
         <div className="w">
           <span className="badge">{c.badge}</span>
@@ -844,12 +914,8 @@ function Site() {
           <p className="lead">{c.heroText}</p>
 
           <div className="cta">
-            <a className="btn big" href="#quote">
-              Get an instant quote
-            </a>
-
-            <a className="btn big o" href="#contact">
-              Talk to us
+            <a className="btn big" href="/#quote" onClick={(e) => goHome('quote', e)}>
+              Request a quote
             </a>
           </div>
 
@@ -962,6 +1028,7 @@ function Site() {
       </section>
 
       <Contact c={c} />
+      </main>
 
       <Footer c={c} />
     </>
@@ -971,29 +1038,60 @@ function Site() {
 /* ---- Application entry point ---- */
 
 export default function App() {
-  const [h, setH] = useState(location.hash);
+  const [, tick] = useState(0);
+  const lastPath = useRef('');
 
   useEffect(() => {
     const f = () => {
-      setH(location.hash);
-      if (/^#\/[a-z]/i.test(location.hash)) window.scrollTo(0, 0);
+      fixLegacy();
+      tick((n) => n + 1);
     };
+    addEventListener('popstate', f);
     addEventListener('hashchange', f);
-    return () => removeEventListener('hashchange', f);
+    addEventListener('navigate', f);
+    return () => {
+      removeEventListener('popstate', f);
+      removeEventListener('hashchange', f);
+      removeEventListener('navigate', f);
+    };
   }, []);
 
-   const sub = h.match(/^#\/(industries|services|materials)/);
+  // After every navigation: scroll to the "#section" in the URL, or back to the top on a new page.
+  useEffect(() => {
+    const id = location.hash.slice(1);
+    const page = location.pathname;
 
-  // Real path that isn't the homepage (the server sends these here with a 404 status)
-  const p = location.pathname.replace(/\/+$/, '');
-  const badPath = p !== '' && p !== '/index.html';
+    if (id && !id.startsWith('/')) {
+      let tries = 0;
+      const t = setInterval(() => {
+        const el = document.getElementById(id);
+        if (el) { el.scrollIntoView(); clearInterval(t); }
+        else if (++tries > 40) clearInterval(t); // content may still be loading; give up after ~4s
+      }, 100);
+      lastPath.current = page;
+      return () => clearInterval(t);
+    }
 
-  // "#/something" that isn't a known route. Plain anchors like #quote are fine.
-  // "#/?s=quote" is the home page scrolled to a section, so it is not a bad route.
-  const badHash = /^#\/[^?]/.test(h) && h !== '#/admin' && !sub;
+    if (page !== lastPath.current) window.scrollTo(0, 0);
+    lastPath.current = page;
+  });
 
-  if (badPath || badHash) return <NotFound />;
-  if (h === '#/admin') return <Admin />;
-  if (sub) return <SubPage key={sub[1]} route={sub[1]} />;
-  return <Site />;
+  const r = routeName();
+  const h = location.hash;
+
+  let view;
+  if (h === '#/admin' && r === '') view = <Suspense fallback={<Loader />}><Admin /></Suspense>;
+  else if (SUB.includes(r)) view = <SubPage key={r} route={r} />;
+  else if (LEGAL.includes(r)) view = <Legal key={r} kind={r} />;
+  // A real path we don't have (the server sends these with a 404 status), or "#/something" that
+  // isn't a route. Plain anchors like #quote are fine.
+  else if ((r !== '' && r !== 'index.html') || /^#\/[^?]/.test(h)) view = <NotFound />;
+  else view = <Site />;
+
+  return (
+    <>
+      {view}
+      {h !== '#/admin' && <CookieBanner />}
+    </>
+  );
 }

@@ -1,0 +1,459 @@
+{
+  "content": {
+    "name": "The Aero Forge",
+    "badge": "Now taking orders in Vadodara, Gujarat",
+    "heroTitle": "From STEP file to printed part.",
+    "heroText": "Turn your CAD designs into high-quality 3D-printed parts with a process built around your needs. Upload your design, share your requirements, and receive a custom quotation from our team. Get reliable parts, personalized support, and practical manufacturing solutions to help you bring your ideas to life.",
+    "stats": [
+      {
+        "value": "24h",
+        "label": "fastest turnaround"
+      },
+      {
+        "value": "6",
+        "label": "engineering materials"
+      },
+      {
+        "value": "0.1 mm",
+        "label": "finest layer height"
+      },
+      {
+        "value": "3",
+        "label": "Technologies"
+      }
+    ],
+    "quoteTitle": "Bring Your Design to Life,  Request a Quote",
+    "quoteText": "Upload your STEP file, let our team review your requirements, and request a tailored quote for your project. Get the right manufacturing solution for your design, backed by engineering-focused support. Your file stays on your device until you choose to submit it for review.",
+    "servicesTitle": "What we print, and how we help",
+    "servicesText": "From a single bracket to a batch of 500, printed on calibrated machines and checked before it leaves.",
+    "services": [
+      {
+        "title": "Rapid prototyping",
+        "desc": "Functional prototypes in 24–72 hours so you can test fit and form before you commit to tooling."
+      },
+      {
+        "title": "Custom parts & spares",
+        "desc": "Brackets, enclosures, jigs, replacement parts. Send a STEP file or a sketch and we will help."
+      },
+      {
+        "title": "Small-batch production",
+        "desc": "Repeat runs of 5 to 500 parts with consistent quality and quantity pricing."
+      },
+      {
+        "title": "Student & project support",
+        "desc": "Final-year projects, IoT enclosures, robotics parts. Fair pricing and design feedback."
+      },
+      {
+        "title": "CAD & design help",
+        "desc": "No model yet? We can turn your measurements or idea into a printable CAD file."
+      },
+      {
+        "title": "Finishing",
+        "desc": "Sanding, priming, painting and assembly for parts that need to look as good as they work."
+      }
+    ],
+    "materialsTitle": "Materials",
+    "materialsText": "Pick the Composites material that fits the job. Prices in the instant quote update as you switch.",
+    "stepsTitle": "How it works",
+    "steps": [
+      {
+        "title": "Upload your STEP file",
+        "desc": "Get an instant estimate in your browser. Your file is not uploaded anywhere until you send an inquiry."
+      },
+      {
+        "title": "Send an inquiry",
+        "desc": "Confirm material, quantity and deadline. We review the model and reply within a few hours."
+      },
+      {
+        "title": "We print",
+        "desc": "Your parts are sliced, printed and quality-checked on calibrated machines."
+      },
+      {
+        "title": "Delivery or pickup",
+        "desc": "Pick up in Vadodara or get it shipped across India."
+      }
+    ],
+    "aboutTitle": "A small workshop that answers its phone",
+    "aboutText": "The Aero Forge 3D started in Vadodara, Gujarat in 2026. We are engineers, so we look at your design before we print it and tell you honestly if a small change will make it stronger, faster or cheaper to make.\n\nFounders, students, workshops and factories send us their parts. You deal directly with the person running the printers, not a ticket queue.",
+    "location": "Vadodara, Gujarat 390001",
+    "hours": "Mon – Sat, 10:00 – 19:00",
+    "phone": "+91 7229064808",
+    "email": "khokharmufiz00784@gmail.com",
+    "faqTitle": "Questions people ask",
+    "faqs": [
+      {
+        "q": "Which file formats can I send?",
+        "a": "STEP or STP for the instant quote. In an inquiry you can also attach STL, 3MF, OBJ, PDF or ZIP up to 15 MB."
+      }
+    ],
+    "contactTitle": "Tell us what you need printed",
+    "contactText": "Send a message with your file or idea. We reply within a few hours during working hours.",
+    "leadTitle": "Almost there",
+    "leadText": "Choose your country and currency, then enter your details to see your instant estimate. We only use them to follow up on your quote.",
+    "leadButton": "Show my estimate",
+    "technologyLabel": "Technology",
+    "unitLabel": "What unit is your model in?",
+    "drawEnabled": "yes",
+    "drawTitle": "Technical Drawings and Notes",
+    "drawHint": "Add drawings or reference files (max 5 MB each, up to 5 files) and any notes.",
+    "drawMaxMb": 5,
+    "holesTitle": "Detected",
+    "showHoles": "yes",
+    "showChecks": "yes",
+    "checks": [
+      {
+        "key": "watertight",
+        "label": "Closed Geometry (Watertight)",
+        "on": "yes"
+      },
+      {
+        "key": "thin",
+        "label": "Thin walls",
+        "on": "yes"
+      },
+      {
+        "key": "overhang",
+        "label": "Overhangs and Supports",
+        "on": "yes"
+      },
+      {
+        "key": "integrity",
+        "label": "Part Integrity",
+        "on": "yes"
+      }
+    ]
+  },
+  "pricing": {
+    "currency": "₹",
+    "setupFee": 100,
+    "hourlyRate": 100,
+    "speedCm3PerHour": 12,
+    "markupPct": 20,
+    "minPrice": 200,
+    "supportsPct": 25,
+    "wallMm": 1.2,
+    "rangePct": 15,
+    "buildVolume": [
+      256,
+      256,
+      256
+    ],
+    "qualities": [
+      {
+        "tech": "FDM",
+        "name": "Draft",
+        "layer": 0.5
+      },
+      {
+        "tech": "FDM",
+        "name": "Standard",
+        "layer": 0.3
+      },
+      {
+        "tech": "FDM",
+        "name": "Fine",
+        "layer": 0.2
+      }
+    ],
+    "materials": [
+      {
+        "tech": "FDM",
+        "name": "PET-G",
+        "desc": "PETG (Polyethylene Terephthalate Glycol) is a clear, durable, and chemical-resistant thermoplastic polyester widely used in manufacturing and 3D printing. ",
+        "density": 1,
+        "pricePerGram": 1
+      },
+      {
+        "name": "mmmm",
+        "tech": "SLA",
+        "desc": "",
+        "density": 1,
+        "pricePerGram": 1
+      }
+    ],
+    "technologies": [
+      {
+        "name": "FDM",
+        "desc": "Strong, affordable parts for prototypes and functional use.",
+        "rateMul": 1,
+        "speedMul": 1,
+        "refLayer": 0.2
+      },
+      {
+        "name": "SLA",
+        "desc": "Resin printing for fine detail and smooth surfaces.",
+        "rateMul": 1.5,
+        "speedMul": 0.6,
+        "refLayer": 0.05
+      },
+      {
+        "name": "MJF",
+        "desc": "MJF",
+        "rateMul": 1,
+        "speedMul": 1,
+        "refLayer": 1
+      }
+    ],
+    "currencies": [
+      {
+        "code": "INR",
+        "symbol": "₹",
+        "rate": 1
+      },
+      {
+        "code": "USD",
+        "symbol": "$",
+        "rate": 0.01
+      },
+      {
+        "code": "EUR",
+        "symbol": "€",
+        "rate": 0.092
+      },
+      {
+        "code": "GBP",
+        "symbol": "£",
+        "rate": 0.0095
+      },
+      {
+        "code": "AED",
+        "symbol": "AED ",
+        "rate": 0.044
+      }
+    ],
+    "countries": [
+      {
+        "name": "India",
+        "currency": "INR"
+      },
+      {
+        "name": "United States",
+        "currency": "USD"
+      },
+      {
+        "name": "United Kingdom",
+        "currency": "GBP"
+      },
+      {
+        "name": "Germany",
+        "currency": "EUR"
+      },
+      {
+        "name": "United Arab Emirates",
+        "currency": "AED"
+      }
+    ],
+    "units": [
+      {
+        "name": "Millimeters (mm)",
+        "factor": 1
+      },
+      {
+        "name": "Centimeters (cm)",
+        "factor": 10
+      },
+      {
+        "name": "Inches (in)",
+        "factor": 25.4
+      }
+    ],
+    "infills": [
+      {
+        "value": 10
+      },
+      {
+        "value": 20
+      },
+      {
+        "value": 30
+      },
+      {
+        "value": 40
+      },
+      {
+        "value": 50
+      },
+      {
+        "value": 60
+      },
+      {
+        "value": 70
+      },
+      {
+        "value": 80
+      },
+      {
+        "value": 90
+      },
+      {
+        "value": 100
+      }
+    ]
+  },
+  "pages": {
+    "industries": {
+      "title": "Industries that rely on 3D printing",
+      "text": "From the first prototype to production tooling, additive manufacturing shortens development time and cuts cost across sectors.",
+      "items": [
+        {
+          "name": "Automotive",
+          "desc": "Faster design cycles and low-volume parts without tooling cost.",
+          "uses": "Prototype brackets and housings\nJigs, fixtures and checking gauges\nCustom and replacement parts"
+        },
+        {
+          "name": "Electronics",
+          "desc": "Enclosures and fixtures made to fit your board exactly.",
+          "uses": "Device enclosures and mounts\nTest fixtures\nCable and connector holders"
+        },
+        {
+          "name": "Robotics",
+          "desc": "Lightweight, custom parts that evolve with each design iteration.",
+          "uses": "Grippers and end effectors\nChassis and brackets\nSensor mounts"
+        },
+        {
+          "name": "Food & Beverage",
+          "desc": "Tooling and fixtures for processing and packaging lines.",
+          "uses": "Custom guides and change parts\nPrototype packaging\nMolds and forming tools"
+        },
+        {
+          "name": "Aerospace",
+          "desc": "Lightweight, complex geometry for prototyping and tooling.",
+          "uses": "Ducting and housings\nFlight-test prototypes\nAssembly jigs"
+        }
+      ],
+      "slides": []
+    },
+    "services": {
+      "title": "Our services",
+      "text": "Manufacturing capabilities backed by engineers who review your design before it is printed.",
+      "groupTitle": "Advance Manufacturing",
+      "groupText": "Industrial additive manufacturing in metal and plastic.",
+      "categories": [
+        {
+          "name": "Metal 3D printing",
+          "desc": "Strong, functional metal parts for demanding applications.",
+          "image": ""
+        },
+        {
+          "name": "Plastic 3D printing",
+          "desc": "A range of plastic technologies, from quick prototypes to production-grade parts."
+        }
+      ],
+      "technologies": [
+        {
+          "category": "Metal 3D printing",
+          "name": "DMLS / SLM",
+          "desc": "Laser powder-bed fusion for dense, high-strength metal parts.",
+          "image": ""
+        },
+        {
+          "category": "Plastic 3D printing",
+          "name": "FDM",
+          "desc": "Fused deposition modeling. Economical, durable parts in engineering thermoplastics."
+        },
+        {
+          "category": "Plastic 3D printing",
+          "name": "SLA",
+          "desc": "Stereolithography. Smooth surface finish and fine detail from liquid resin."
+        },
+        {
+          "category": "Plastic 3D printing",
+          "name": "MJF",
+          "desc": "Multi Jet Fusion. Strong, consistent nylon parts, great for small batches."
+        }
+      ],
+      "slides": []
+    },
+    "materials": {
+      "title": "Materials",
+      "text": "Choose a technology to see the materials we support and download their datasheets.",
+      "technologies": [
+        {
+          "name": "FDM",
+          "desc": "Fused deposition modeling. Strong thermoplastic parts for prototypes and end-use."
+        },
+        {
+          "name": "SLA",
+          "desc": "Stereolithography. High detail and smooth surfaces using photopolymer resin."
+        },
+        {
+          "name": "MJF",
+          "desc": "Multi Jet Fusion. Durable nylon parts with consistent mechanical properties."
+        }
+      ],
+      "items": [
+        {
+          "name": "PLA",
+          "tech": "FDM",
+          "desc": "Best all-rounder for prototypes, models and display parts.",
+          "props": "Density 1.24 g/cm³\nEasy to print",
+          "datasheet": "bbcda30c23de88d4.pdf",
+          "datasheetName": "40) Vhora_Juned _14-OCT-2026 (1).pdf"
+        },
+        {
+          "name": "PETG",
+          "tech": "FDM",
+          "desc": "Tougher than PLA, handles light outdoor use.",
+          "props": "Density 1.27 g/cm³\nGood chemical resistance",
+          "datasheet": "",
+          "datasheetName": ""
+        },
+        {
+          "name": "ABS",
+          "tech": "FDM",
+          "desc": "Heat resistant, easy to sand and finish.",
+          "props": "Density 1.04 g/cm³\nHeat resistant",
+          "datasheet": "",
+          "datasheetName": ""
+        },
+        {
+          "name": "ASA",
+          "tech": "FDM",
+          "desc": "UV-stable, built for outdoor enclosures.",
+          "props": "Density 1.07 g/cm³\nUV stable",
+          "datasheet": "",
+          "datasheetName": ""
+        },
+        {
+          "name": "Nylon",
+          "tech": "FDM",
+          "desc": "Strong and wear-resistant. Gears, hinges.",
+          "props": "Density 1.14 g/cm³\nWear resistant",
+          "datasheet": "",
+          "datasheetName": ""
+        },
+        {
+          "name": "TPU",
+          "tech": "FDM",
+          "desc": "Flexible. Grips, gaskets, bumpers.",
+          "props": "Density 1.21 g/cm³\nFlexible",
+          "datasheet": "",
+          "datasheetName": ""
+        },
+        {
+          "name": "Standard resin",
+          "tech": "SLA",
+          "desc": "Fine detail and smooth finish for visual models.",
+          "props": "Smooth surface\nHigh detail",
+          "datasheet": "",
+          "datasheetName": ""
+        },
+        {
+          "name": "PA12 (Nylon 12)",
+          "tech": "MJF",
+          "desc": "Strong, durable functional parts and small batches.",
+          "props": "Isotropic strength\nGood chemical resistance",
+          "datasheet": "",
+          "datasheetName": ""
+        }
+      ],
+      "slides": []
+    },
+    "home": {
+      "title": "",
+      "text": "",
+      "slides": []
+    }
+  },
+  "inquiries": []
+}

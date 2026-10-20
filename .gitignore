@@ -1,0 +1,11 @@
+node_modules/
+client/dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# Live site data: inquiries contain customers' names, emails and phone numbers. Never commit these.
+server/data.json
+server/uploads/

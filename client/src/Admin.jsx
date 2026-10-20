@@ -120,7 +120,7 @@ function Panel({ logout }) {
   const catNames = pg.services.categories.map(x => x.name);
   return (
     <div className="w ad">
-      <div className="adh"><h2>Admin panel</h2><div><a className="pill" href="#/">View site</a> <button className="pill" onClick={logout}>Logout</button></div></div>
+      <div className="adh"><h2>Admin panel</h2><div><a className="pill" href="/">View site</a> <button className="pill" onClick={logout}>Logout</button></div></div>
       <div className="pills" style={{ marginBottom: 20 }}>{[['inq', `Inquiries (${newCount} new)`], ['content', 'Website content'], ['pages', 'Industries / Services / Materials'], ['pricing', 'Pricing & materials']].map(([k, l]) => <button key={k} className={'pill' + (tab === k ? ' on' : '')} onClick={() => setTab(k)}>{l}</button>)}</div>
 
       {tab === 'inq' && <div className="card tbl"><table><thead><tr><th>Date</th><th>From</th><th>Message</th><th>File</th><th>Status</th><th></th></tr></thead><tbody>

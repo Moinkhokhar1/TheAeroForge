@@ -455,34 +455,5 @@
       "slides": []
     }
   },
-  "inquiries": [
-    {
-      "id": "mvdrd4vt",
-      "name": "Moin Khokhar",
-      "email": "moinkhokhar2730vdr@gmail.com",
-      "phone": "+917201074880",
-      "topic": "Instant quote",
-      "message": "Instant quote request for perfume_organizer.step (model unit: Millimeters (mm)): FDM, PET-G, Standard, 20% infill, qty 1. Size 234 × 128 × 58 mm, volume 894.9 cm³, 8 holes detected. Internal estimate: ₹2,480.",
-      "notes": "",
-      "file": "288128d172a5664b.step",
-      "fileName": "perfume_organizer.step",
-      "drawings": [],
-      "status": "new",
-      "createdAt": "2026-10-18T11:44:45.305Z"
-    },
-    {
-      "id": "mvdqf7ud",
-      "name": "Moin",
-      "email": "naprooms.cctv@gmail.com",
-      "phone": "7201074880",
-      "topic": "Instant quote",
-      "message": "Instant quote request for perfume_organizer.step (model unit: Millimeters (mm)): FDM, PET-G, Standard, 20% infill, qty 1. Size 234 × 128 × 58 mm, volume 894.9 cm³, 8 holes detected. Internal estimate: ₹2,480.",
-      "notes": "",
-      "file": "b3c99b52aeefe356.step",
-      "fileName": "perfume_organizer.step",
-      "drawings": [],
-      "status": "new",
-      "createdAt": "2026-10-18T11:18:22.837Z"
-    }
-  ]
+  "inquiries": []
 }

@@ -1,21 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export const goHome = (id, e) => {
-  if (e) e.preventDefault();
-  const onHome = !/^#\/[a-z]/i.test(location.hash);
-  const scroll = () => {
-    const el = document.getElementById(id);
-    if (el) { el.scrollIntoView(); return true; }
-    return false;
-  };
-  if (onHome) { scroll(); return; }
-  location.hash = '#/';
-  let tries = 0;
-  const t = setInterval(() => {
-    if (scroll() || ++tries > 30) clearInterval(t);
-  }, 100);
-};
+import { go, goHome, routeName } from './router.js';
+
+export { goHome };
 
 const LINKS = [
   ['Instant quote', { home: 'quote' }],
@@ -29,8 +17,7 @@ const LINKS = [
 
 export default function Nav({ c }) {
   const [open, setOpen] = useState(false);
-  const h = location.hash;
-  const on = (r) => (r && h.startsWith('#/' + r) ? 'on' : '');
+  const on = (r) => (r && routeName() === r ? 'on' : '');
   const close = () => setOpen(false);
 
   useEffect(() => {
@@ -47,27 +34,28 @@ export default function Nav({ c }) {
 
   const link = ([label, t], i, cls = '') =>
     t.route ? (
-      <a key={label} href={'#/' + t.route} className={(cls + ' ' + on(t.route)).trim()} style={{ '--i': i }} onClick={close}>
+      <a key={label} href={'/' + t.route} className={(cls + ' ' + on(t.route)).trim()} style={{ '--i': i }} onClick={(e) => { close(); go('/' + t.route, e); }}>
         {label}
       </a>
     ) : (
-      <a key={label} href="#/" className={cls} style={{ '--i': i }} onClick={(e) => { close(); goHome(t.home, e); }}>
+      <a key={label} href={'/#' + t.home} className={cls} style={{ '--i': i }} onClick={(e) => { close(); goHome(t.home, e); }}>
         {label}
       </a>
     );
 
   return (
     <>
-      <nav>
+      <a className="skip" href="#main">Skip to content</a>
+      <nav aria-label="Main">
         <div className="w nav">
-            <a className="logo" href="#/" onClick={(e) => goHome('top', e)}>
-              <img src="/assets/icon-512.png" alt="" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 10 }} />
+            <a className="logo" href="/" onClick={(e) => goHome('top', e)}>
+              <img src="/assets/logo-96.png" alt="" width="40" height="40" style={{ objectFit: 'contain', borderRadius: 10 }} />
               {c.name}
             </a>
 
           <div className="links">
             {LINKS.map((l, i) => link(l, i))}
-            <a className="btn" href="/inquery" onClick={(e) => goHome('contact', e)}>Send inquiry</a>
+            <a className="btn" href="/#quote" onClick={(e) => goHome('quote', e)}>Request a quote</a>
           </div>
 
           <button
@@ -87,7 +75,7 @@ export default function Nav({ c }) {
           <aside className={'nv-drawer' + (open ? ' open' : '')} aria-hidden={!open}>
             <div className="nv-top">
               <b style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <img src="/assets/icon-512.png" alt="" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                <img src="/assets/logo-96.png" alt="" width="32" height="32" style={{ objectFit: 'contain' }} />
                 {c.name}
               </b>
               <button className="nv-burger open" aria-label="Close menu" onClick={close}>
@@ -101,11 +89,11 @@ export default function Nav({ c }) {
 
             <a
               className="nv-cta"
-              href="#/"
+              href="/#quote"
               style={{ '--i': LINKS.length }}
-              onClick={(e) => { close(); goHome('contact', e); }}
+              onClick={(e) => { close(); goHome('quote', e); }}
             >
-              Send inquiry
+              Request a quote
             </a>
 
             <div className="nv-foot" style={{ '--i': LINKS.length + 1 }}>

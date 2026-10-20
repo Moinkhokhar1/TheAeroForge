@@ -1,11 +1,52 @@
 const express = require('express'), multer = require('multer'), jwt = require('jsonwebtoken'),
-  cors = require('cors'), fs = require('fs'), path = require('path'), crypto = require('crypto');
+  compression = require('compression'), rateLimit = require('express-rate-limit'),
+  fs = require('fs'), path = require('path'), crypto = require('crypto');
+const seo = require('./seo');
+
+// Optional image compression for admin uploads. If sharp isn't installed, images are stored as uploaded.
+let sharp = null;
+try { sharp = require('sharp'); } catch { /* optional */ }
+
+// Reads server/.env if it exists (Node 20.12+). Real environment variables always win.
+try { process.loadEnvFile(path.join(__dirname, '.env')); } catch { /* no .env file */ }
 
 const PORT = process.env.PORT || 5001;
-const SECRET = process.env.JWT_SECRET || 'change-this-secret';
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'moinkhokhar2730vdr@gmail.com').trim().toLowerCase();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // CHANGE in production
+const dist = path.join(__dirname, '../client/dist');
+const indexHtml = path.join(dist, 'index.html');
+
+// "Production" = NODE_ENV=production, or (if NODE_ENV is not set) a built client sitting next to the server.
+const isProd = process.env.NODE_ENV ? process.env.NODE_ENV === 'production' : fs.existsSync(indexHtml);
+
+// ---------- Secrets: only ever from the environment, never from the code ----------
+const WEAK = new Set(['admin123', 'change-this-secret', 'yourpass', 'longrandom', 'password', 'changeme']);
+const need = (name, min, devValue) => {
+  const v = process.env[name];
+  const ok = v && v.length >= min && !WEAK.has(v.toLowerCase());
+  if (ok) return v;
+  if (isProd) {
+    console.error(`\n✖ ${name} is missing or too weak. Set it as an environment variable (at least ${min} characters, not a placeholder). See server/.env.example.\n`);
+    process.exit(1);
+  }
+  if (v) console.warn(`! ${name} is weak. That is fine on your own computer, but production will refuse to start with it.`);
+  return v || devValue();
+};
+const SECRET = need('JWT_SECRET', 32, () => crypto.randomBytes(32).toString('hex'));
+const ADMIN_PASSWORD = need('ADMIN_PASSWORD', 12, () => {
+  const p = crypto.randomBytes(9).toString('base64url');
+  console.log('Dev admin password for this run (set ADMIN_PASSWORD to choose your own):', p);
+  return p;
+});
+let ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+if (!ADMIN_EMAIL) {
+  if (isProd) { console.error('\n✖ ADMIN_EMAIL is not set. See server/.env.example.\n'); process.exit(1); }
+  ADMIN_EMAIL = 'admin@localhost';
+  console.log('Dev admin email:', ADMIN_EMAIL, '(set ADMIN_EMAIL to change it)');
+}
+const SITE_URL = (process.env.SITE_URL || '').replace(/\/+$/, '');
+if (isProd && !SITE_URL) console.warn('! SITE_URL is not set (for example https://yourdomain.com). Canonical links and the sitemap will use the request host instead.');
+
 const DB = path.join(__dirname, 'data.json'), UP = path.join(__dirname, 'uploads');
+const SEED = path.join(__dirname, 'data.seed.json');
 const DS = path.join(UP, 'datasheets');
 const IM = path.join(UP, 'images');
 fs.mkdirSync(UP, { recursive: true });
@@ -19,7 +60,7 @@ const safeEq = (a, b) => {
 
 const defaults = {
   content: {
-    name: 'Layerforge 3D', badge: 'Now taking orders in Vadodara, Gujarat',
+    name: 'The Aero Forge', badge: 'Now taking orders in Vadodara, Gujarat',
     heroTitle: 'From STEP file to printed part.',
     heroText: 'Drop in your CAD file and see a price in seconds, right in your browser. Then send it to us and we will print it. Precision 3D printing for engineers, founders and makers.',
     stats: [{ value: '24h', label: 'fastest turnaround' }, { value: '6', label: 'engineering materials' }, { value: '0.1 mm', label: 'finest layer height' }, { value: '256 mm', label: 'max part size' }],
@@ -44,7 +85,7 @@ const defaults = {
       { title: 'Delivery or pickup', desc: 'Pick up in Vadodara or get it shipped across India.' }
     ],
     aboutTitle: 'A small workshop that answers its phone',
-    aboutText: 'Layerforge 3D started in Vadodara, Gujarat in 2026. We are engineers, so we look at your design before we print it and tell you honestly if a small change will make it stronger, faster or cheaper to make.\n\nFounders, students, workshops and factories send us their parts. You deal directly with the person running the printers, not a ticket queue.',
+    aboutText: 'The Aero Forge started in Vadodara, Gujarat in 2026. We are engineers, so we look at your design before we print it and tell you honestly if a small change will make it stronger, faster or cheaper to make.\n\nFounders, students, workshops and factories send us their parts. You deal directly with the person running the printers, not a ticket queue.',
     location: 'Vadodara, Gujarat 390001', hours: 'Mon – Sat, 10:00 – 19:00', phone: '+91 7229064808', email: 'moinkhokhar2730vdr@gmail.com',
     faqTitle: 'Questions people ask',
     faqs: [
@@ -136,7 +177,6 @@ defaults.pages.materials.slides = [
 ];
 
 const load = () => {
-  if (!fs.existsSync(DB)) return structuredClone(defaults);
   const d = JSON.parse(fs.readFileSync(DB, 'utf8'));
   const pages = {};
   for (const k of Object.keys(defaults.pages)) pages[k] = { ...defaults.pages[k], ...(d.pages || {})[k] };
@@ -148,7 +188,18 @@ const load = () => {
   };
 };
 const save = d => fs.writeFileSync(DB, JSON.stringify(d, null, 2));
-if (!fs.existsSync(DB)) save(defaults);
+// First run: start from data.seed.json (site content without any customer inquiries), else built-in defaults.
+if (!fs.existsSync(DB)) {
+  if (fs.existsSync(SEED)) fs.copyFileSync(SEED, DB);
+  else save(defaults);
+}
+// Small cache for the SEO tags so every page view doesn't re-read data.json.
+let contentCache = { m: 0, c: defaults.content };
+const siteContent = () => {
+  const m = fs.statSync(DB).mtimeMs;
+  if (m !== contentCache.m) contentCache = { m, c: load().content };
+  return contentCache.c;
+};
 
 const rnd = (f) => crypto.randomBytes(8).toString('hex') + path.extname(f.originalname).toLowerCase();
 
@@ -179,10 +230,38 @@ const uploadImage = multer({
 });
 
 const app = express();
-app.use(cors()); app.use(express.json({ limit: '1mb' }));
+app.disable('x-powered-by');
+app.set('trust proxy', 1); // behind the host's reverse proxy: lets req.secure / client IPs be right
+
+// ---------- HTTPS + security headers ----------
+const forceHttps = isProd && process.env.FORCE_HTTPS !== 'false';
+app.use((req, res, next) => {
+  // Redirect only when the proxy says the visitor used plain http (no header = can't tell, so no redirect loop).
+  const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  if (forceHttps && proto === 'http' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(req.hostname)) {
+    return res.redirect(req.method === 'GET' || req.method === 'HEAD' ? 301 : 308, 'https://' + req.headers.host + req.originalUrl);
+  }
+  if (req.secure) res.set('Strict-Transport-Security', 'max-age=31536000');
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  });
+  next();
+});
+
+app.use(compression());
+app.use(express.json({ limit: '1mb' }));
+
+// ---------- Abuse limits ----------
+const limiter = (windowMs, limit, error) =>
+  rateLimit({ windowMs, limit, standardHeaders: 'draft-7', legacyHeaders: false, message: { error } });
+const inquiryLimit = limiter(15 * 60 * 1000, 6, 'Too many inquiries from this connection. Please try again in a few minutes.');
+const loginLimit = limiter(15 * 60 * 1000, 10, 'Too many login attempts. Please try again later.');
 
 const auth = (req, res, next) => {
-  try { jwt.verify((req.headers.authorization || '').replace('Bearer ', '') || req.query.t, SECRET); next(); }
+  try { jwt.verify((req.headers.authorization || '').replace('Bearer ', '') || req.query.t, SECRET, { algorithms: ['HS256'] }); next(); }
   catch { res.status(401).json({ error: 'Unauthorized' }); }
 };
 
@@ -202,7 +281,7 @@ app.get('/api/images/:file', (req, res) => {
   res.sendFile(f);
 });
 
-app.post('/api/inquiries', (req, res) =>
+app.post('/api/inquiries', inquiryLimit, (req, res) =>
   upload.fields([{ name: 'file', maxCount: 1 }, { name: 'drawings', maxCount: 5 }])(req, res, err => {
     const files = req.files || {};
     const main = (files.file || [])[0];
@@ -214,7 +293,25 @@ app.post('/api/inquiries', (req, res) =>
       return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'File is larger than 15 MB' : err.message });
     }
 
-    const { name, email, phone = '', topic = '', message, notes = '' } = req.body || {};
+    const { name, email, phone = '', topic = '', message, notes = '', hp_url = '', elapsed } = req.body || {};
+
+    // Spam checks. 1) hidden field that only bots fill in: pretend it worked so they don't retry.
+    if (hp_url) {
+      cleanup();
+      return res.json({ ok: true });
+    }
+    // 2) a person needs more than ~1.5 s to fill a form; scripts post instantly (or leave this out).
+    const ms = Number(elapsed);
+    if (!Number.isFinite(ms) || ms < 1500) {
+      cleanup();
+      return res.status(400).json({ error: 'That was too quick. Please wait a moment and send it again.' });
+    }
+    // 3) link-stuffed messages are almost always spam.
+    if ((String(message || '').match(/https?:\/\//gi) || []).length > 3) {
+      cleanup();
+      return res.status(400).json({ error: 'Please remove some of the links from your message.' });
+    }
+
     if (!name || !/^\S+@\S+\.\S+$/.test(email || '') || !message) {
       cleanup();
       return res.status(400).json({ error: 'Name, a valid email and a message are required' });
@@ -241,12 +338,12 @@ app.post('/api/inquiries', (req, res) =>
 );
 
 // ---------- Admin ----------
-app.post('/api/login', (req, res) => {
+app.post('/api/login', loginLimit, (req, res) => {
   const { email = '', password = '' } = req.body || {};
   const okEmail = safeEq(String(email).trim().toLowerCase(), ADMIN_EMAIL);
   const okPass = safeEq(password, ADMIN_PASSWORD);
   if (!okEmail || !okPass) return res.status(401).json({ error: 'Wrong email or password' });
-  res.json({ token: jwt.sign({ admin: true }, SECRET, { expiresIn: '12h' }) });
+  res.json({ token: jwt.sign({ admin: true }, SECRET, { algorithm: 'HS256', expiresIn: '12h' }) });
 });
 
 app.get('/api/admin/data', auth, (_, res) => res.json(load()));
@@ -263,10 +360,22 @@ app.post('/api/admin/datasheet', auth, (req, res) =>
 );
 
 app.post('/api/admin/image', auth, (req, res) =>
-  uploadImage.single('file')(req, res, err => {
+  uploadImage.single('file')(req, res, async err => {
     if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Image is larger than 6 MB' : err.message });
     if (!req.file) return res.status(400).json({ error: 'No file received' });
-    res.json({ file: req.file.filename });
+
+    let file = req.file.filename;
+    // Shrink to max 1800 px and store as WebP (typically 70-90% smaller). Animated GIFs are kept as they are.
+    if (sharp && !/\.gif$/i.test(file)) {
+      try {
+        const out = file.replace(/\.[^.]+$/, '') + '.webp';
+        await sharp(req.file.path).rotate().resize({ width: 1800, height: 1800, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 80 }).toFile(path.join(IM, out));
+        fs.unlink(req.file.path, () => {});
+        file = out;
+      } catch (e) { /* keep the original upload */ }
+    }
+    res.json({ file });
   })
 );
 
@@ -296,23 +405,64 @@ app.delete('/api/admin/inquiries/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
-const dist = path.join(__dirname, '../client/dist');
-const indexHtml = path.join(dist, 'index.html');
+// ---------- robots.txt and sitemap.xml ----------
+const originOf = req => SITE_URL || `${isProd ? 'https' : req.protocol}://${req.get('host')}`;
+
+app.get('/robots.txt', (req, res) => res.type('text/plain').send(seo.robots(originOf(req))));
+app.get('/sitemap.xml', (req, res) => res.type('application/xml').send(seo.sitemap(originOf(req))));
+
+// ---------- Built website ----------
+// Vite's hashed bundles (index-AbC123xY.js) never change, so they can be cached for a year.
+const HASHED = /[\\/]assets[\\/][^\\/]+-[A-Za-z0-9_-]{8}\.(js|css)$/;
+
+// The raw build file has no per-page tags, so send people (and crawlers) to "/" instead.
+app.get('/index.html', (req, res) => res.redirect(301, '/'));
 
 // Static files must be served BEFORE the catch-all below, otherwise every
 // request (including /assets/*.js) hits the 404 handler and the page is blank.
-if (fs.existsSync(dist)) app.use(express.static(dist));
+// index:false so "/" goes through the SEO-aware handler below instead.
+if (fs.existsSync(dist)) {
+  app.use(express.static(dist, {
+    index: false,
+    maxAge: '1d',
+    setHeaders: (res, file) => {
+      if (HASHED.test(file)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    }
+  }));
+}
 
 // Unknown API routes get JSON
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
-// Homepage gets 200; any other unknown path gets the SPA with a 404 status
+let htmlCache = { m: 0, html: '' };
+const readHtml = () => {
+  const m = fs.statSync(indexHtml).mtimeMs;
+  if (m !== htmlCache.m) htmlCache = { m, html: fs.readFileSync(indexHtml, 'utf8') };
+  return htmlCache.html;
+};
+
+// Pages we have get 200 with their own title/description/canonical; anything else gets the
+// same app with a 404 status and noindex, which shows the custom 404 page.
 app.use((req, res) => {
   if (!fs.existsSync(indexHtml)) {
     return res.status(404).type('text/plain').send('Client build not found. Run "npm run build" in /client first.');
   }
-  const isHome = req.path === '/' || req.path === '/index.html';
-  res.status(isHome ? 200 : 404).sendFile(indexHtml);
+  if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).end();
+
+  // One URL per page: /services/ -> /services
+  const q = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  if (req.path.length > 1 && req.path.endsWith('/')) return res.redirect(301, req.path.replace(/\/+$/, '') + q);
+
+  const c = siteContent();
+  const page = seo.pageFor(req.path, c.name);
+  res.status(page ? 200 : 404).set('Cache-Control', 'no-cache').type('html')
+    .send(seo.render(readHtml(), page, originOf(req), c));
 });
 
-app.listen(PORT, () => console.log('Server on :' + PORT));
+// Never leak stack traces to visitors
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({ error: 'Something went wrong' });
+});
+
+app.listen(PORT, () => console.log('Server on :' + PORT + (isProd ? ' (production)' : ' (development)')));

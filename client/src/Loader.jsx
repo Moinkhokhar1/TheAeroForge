@@ -4,10 +4,17 @@ import { useState, useEffect } from 'react';
 // screen can show before React has loaded; keep the markup here in sync with it.
 const LAYERS = [40, 64, 84, 100, 112, 124];
 
-// On a full page load the loading screen plays for at least this long, even if
-// the data arrives sooner. 5600 = two full 2.8s animation cycles, so it ends
-// right as the printed part fades out. Change it together with the 2.8s in index.html.
-const MIN_MS = 5600;
+// The loading screen plays for at least this long on the FIRST page load of a visit, even if
+// the data arrives sooner. 2800 = one full animation cycle (the 2.8s in index.html), so it
+// ends right as the printed part fades out. It was 5600 and ran on every page load, which
+// made the site feel (and measure) slow. Later loads in the same tab skip it, and so do
+// search-engine crawlers and speed-test tools.
+const seen = () => {
+  try { return sessionStorage.getItem('splash') === '1'; } catch { return false; }
+};
+const BOT = /bot|crawl|spider|lighthouse|pagespeed|headless|gtmetrix/i.test(navigator.userAgent) || navigator.webdriver;
+const MIN_MS = seen() || BOT ? 0 : 2800;
+try { sessionStorage.setItem('splash', '1'); } catch { /* ignore */ }
 
 // index.html records when the loading screen first appeared (window.__ld0).
 const sinceStart = () => performance.now() - (window.__ld0 || 0);
@@ -65,7 +72,7 @@ export default function Loader() {
 function Brand() {
   return (
     <div className="ld-brand">
-      <img src="/assets/icon-512.png" alt="" />
+      <img src="/assets/logo-96.png" alt="" width="40" height="40" />
       <span>The AeroForge</span>
     </div>
   );

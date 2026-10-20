@@ -3,6 +3,7 @@ import { api } from './lib.jsx';
 import Nav from './Nav.jsx';
 import Footer from './Footer.jsx';
 import { normContent } from './defaults.js';
+import { go } from './router.js';
 
 export default function NotFound() {
   const [c, setC] = useState(null);
@@ -48,7 +49,7 @@ export default function NotFound() {
           </p>
 
           <div className="cta" style={{ justifyContent: 'center' }}>
-            <a className="btn big" href="/">Back to home</a>
+            <a className="btn big" href="/" onClick={(e) => go('/', e)}>Back to home</a>
           </div>
         </div>
       </section>

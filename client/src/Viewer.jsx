@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-export const HOLE_COL = { hole: '#d9534f', cbore: '#4a90e2', sel: '#f5a623' };
+import { HOLE_COL } from './holeColors.js';
+export { HOLE_COL };
 
 const MQ = '(max-width:760px)';
 

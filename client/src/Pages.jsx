@@ -5,6 +5,7 @@ import Nav, { goHome } from './Nav.jsx';
 import Footer from './Footer.jsx';
 import Carousel, { imgUrl } from './Carousel.jsx';
 import Loader, { useSplash, SplashExit } from './Loader.jsx';
+import { useSeo, pageSeo } from './seo.js';
 
 const A = (x) => (Array.isArray(x) ? x : []);
 const lines = (s) => String(s || '').split('\n').map((x) => x.trim()).filter(Boolean);
@@ -40,7 +41,7 @@ const Pic = ({ src, label }) => {
   const u = imgUrl(src);
   return (
     <div className="pg-pic">
-      {u ? <img src={u} alt={label || ''} loading="lazy" /> : <span>{(label || '?').trim()[0]}</span>}
+      {u ? <img src={u} alt={label ? label + ' – 3D printed example' : ''} loading="lazy" decoding="async" /> : <span>{(label || '?').trim()[0]}</span>}
     </div>
   );
 };
@@ -66,16 +67,15 @@ const Cta = () => (
   <Reveal>
     <div className="pg-cta">
       <h3>Have a part in mind?</h3>
-      <p>Upload your STEP file for an instant estimate, or talk to us about your project.</p>
-      <a className="pg-btn" href="#/" onClick={(e) => goHome('quote', e)}>Get an instant quote</a>{' '}
-      <a className="pg-btn o" href="#/" onClick={(e) => goHome('contact', e)}>Talk to us</a>
+      <p>Upload your STEP file and tell us what you need. We review it and send you a quote.</p>
+      <a className="pg-btn" href="/#quote" onClick={(e) => goHome('quote', e)}>Request a quote</a>
     </div>
   </Reveal>
 );
 
 function Industries({ data }) {
   return (
-    <main className="pg">
+    <main id="main" className="pg">
       <Hero eyebrow="Industries" title={data.title} text={data.text} slides={data.slides} />
       <div className="w">
         <div className="pg-grid">
@@ -104,7 +104,7 @@ function Services({ data }) {
   const cats = A(data.categories);
   const techs = A(data.technologies);
   return (
-    <main className="pg">
+    <main id="main" className="pg">
       <Hero eyebrow="Services" title={data.title} text={data.text} slides={data.slides} />
       <div className="w">
         <Reveal>
@@ -157,7 +157,7 @@ function Materials({ data }) {
   const tech = techs[sel] || techs[0];
   const list = tech ? items.filter((m) => m.tech === tech.name) : [];
   return (
-    <main className="pg">
+    <main id="main" className="pg">
       <Hero eyebrow="Materials" title={data.title} text={data.text} slides={data.slides} />
       <div className="w">
         <div className="pg-tabs">
@@ -243,6 +243,8 @@ export default function SubPage({ route }) {
   const [err, setErr] = useState('');
   const splash = useSplash();
 
+  useSeo(pageSeo(route, d?.content?.name || 'The Aero Forge'));
+
   useEffect(() => {
     api('/content').then(setD).catch((e) => setErr(e.message));
   }, []);
@@ -253,7 +255,6 @@ export default function SubPage({ route }) {
   const c = normContent(d.content);
   const pg = d.pages || {};
   const View = { industries: Industries, services: Services, materials: Materials }[route];
-  document.title = `${route[0].toUpperCase() + route.slice(1)} | ${c.name}`;
 
   return (
     <>
